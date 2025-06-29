@@ -13,7 +13,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}--snapshots
+  IMAGE_NAME: ${{ github.repository }}-snapshots
   # IMAGE_NAME: ${{ github.repository }}
   DOCKER_BUILDKIT: 1 # Enable BuildKit for better performance
 
