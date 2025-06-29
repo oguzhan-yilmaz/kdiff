@@ -1,6 +1,6 @@
 .vscode/
 archive/
-
+k8s-data-csv-*/
 
 ### ------- auto gen - start ------- ###
 # Byte-compiled / optimized / DLL files
