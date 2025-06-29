@@ -5,64 +5,68 @@ metadata:
   labels:
     {{- include "kdiff-snapshots.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: {{ .Values.steampipe.replicaCount }}
   selector:
     matchLabels:
       {{- include "kdiff-snapshots.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      {{- with .Values.steampipe.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "kdiff-snapshots.labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {{- include "kdiff-snapshots.selectorLabels" . | nindent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {{- with .Values.steampipe.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      automountServiceAccountToken: true
       serviceAccountName: {{ include "kdiff-snapshots.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml .Values.steampipe.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ include "kdiff-snapshots.fullname" . }}
+          envFrom:
+          - configMapRef:
+              name: {{ include "kdiff-snapshots.fullname" . }}-cm-env-vars
+          - secretRef:
+              name: {{ include "kdiff-snapshots.fullname" . }}-secret-env-vars
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+            {{- toYaml .Values.steampipe.securityContext | nindent 12 }}
+          image: "{{ .Values.steampipe.image.repository }}:{{ .Values.steampipe.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.steampipe.image.pullPolicy }}
+          #command: ["sleep", "3000"]
           ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
+            - name: postgres
+              containerPort: {{ .Values.steampipe.containerPort }}
               protocol: TCP
           livenessProbe:
-            {{- toYaml .Values.livenessProbe | nindent 12 }}
-          readinessProbe:
-            {{- toYaml .Values.readinessProbe | nindent 12 }}
+            exec:
+              command:
+              - bash
+              - ./healthcheck.sh
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 6
+          {{- if .Values.steampipe.resources }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
-          volumeMounts:
-            {{- toYaml . | nindent 12 }}
+            {{- toYaml .Values.steampipe.resources | nindent 12 }}
+          {{- else }}
+          resources: {}
           {{- end }}
-      {{- with .Values.volumes }}
-      volumes:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.nodeSelector }}
+          {{- include "kdiff-snapshots.containerVolumeMounts" . | indent 10}}
+      {{- include "kdiff-snapshots.containerVolumes" . | indent 6}}
+      {{- with .Values.steampipe.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.steampipe.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.steampipe.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

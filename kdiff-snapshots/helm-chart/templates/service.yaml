@@ -5,10 +5,10 @@ metadata:
   labels:
     {{- include "kdiff-snapshots.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.steampipe.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: {{ .Values.steampipe.service.port }}
+      targetPort: {{ .Values.steampipe.containerPort }}
       protocol: TCP
       name: http
   selector:
