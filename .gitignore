@@ -1,3 +1,8 @@
+.vscode/
+archive/
+
+
+### ------- auto gen - start ------- ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
