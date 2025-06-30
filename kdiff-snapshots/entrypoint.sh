@@ -13,4 +13,6 @@ echo "Date: $DATE"
 echo "Time: $TIME"
 echo "User: $USER"
 
-bash csv-script.sh
+bash csv-script.sh --debug --out-dir /tmp/kdiff-snapshots
+
+ls -al /tmp/kdiff-snapshots
