@@ -70,7 +70,7 @@ volumes: []
 Expand the name of the chart.
 */}}
 {{- define "kdiff-snapshots.name" -}}
-steampipe
+{{- .Values.steampipe.nameOverride | default .Chart.Name }}
 {{- end }}
 
 {{/*
@@ -122,5 +122,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "kdiff-snapshots.serviceAccountName" -}}
-default
+{{- if .Values.steampipe.serviceAccount.create }}
+{{- default (include "kdiff-snapshots.fullname" .) .Values.steampipe.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.steampipe.serviceAccount.name }}
+{{- end }}
 {{- end }}
