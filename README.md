@@ -9,5 +9,7 @@
 ```bash
 helm repo add kdiff-snapshots https://oguzhan-yilmaz.github.io/kdiff/
 
+helm repo update kdiff-snapshots
+
 helm install kdiff-snapshots kdiff-snapshots/kdiff-snapshots --version 0.0.5
 ```
