@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  kdiff-snapshots:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-06-30T20:25:15.022830823Z"
+    description: A Helm chart for Kubernetes
+    digest: 94647ce5b49420b572402ae0456e1aa35d8551fe564ef1853cf59a36ed54be18
+    name: kdiff-snapshots
+    type: application
+    urls:
+    - https://github.com/oguzhan-yilmaz/kdiff/releases/download/v0.0.5/kdiff-snapshots-0.0.5.tgz
+    version: 0.0.5
+generated: "2025-06-30T20:25:15.022399356Z"
