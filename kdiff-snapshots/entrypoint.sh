@@ -12,3 +12,5 @@ USER=$(whoami)
 echo "Date: $DATE"
 echo "Time: $TIME"
 echo "User: $USER"
+
+bash csv-script.sh
