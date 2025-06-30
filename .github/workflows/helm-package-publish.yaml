@@ -109,7 +109,7 @@ jobs:
           git config --global user.name "Oguzhan Yilmaz"
 
           # clone gh-pages branch
-          git clone -b gh-pages https://github.com/oguzhan-yilmaz/steampipe-powerpipe-kubernetes.git gh-pages-clone
+          git clone -b gh-pages https://github.com/oguzhan-yilmaz/kdiff.git gh-pages-clone
           ls -al
           ls -al gh-pages-clone
 
@@ -136,6 +136,6 @@ jobs:
           # commit and push the new index.yaml
           git add index.yaml
           git commit -m "update index.yaml in Github Action"
-          git remote set-url origin https://x-access-token:${{ secrets.GHCR_TOKEN }}@github.com/oguzhan-yilmaz/steampipe-powerpipe-kubernetes.git
+          git remote set-url origin https://x-access-token:${{ secrets.GHCR_TOKEN }}@github.com/oguzhan-yilmaz/kdiff.git
           git push
           git status
