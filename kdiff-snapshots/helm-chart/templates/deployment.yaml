@@ -32,7 +32,7 @@ spec:
           - configMapRef:
               name: {{ include "kdiff-snapshots.fullname" . }}-cm-env-vars
           - secretRef:
-              name: {{ include "kdiff-snapshots.fullname" . }}-secret-env-vars
+              name: {{ include "kdiff-snapshots.fullname" . }}-credentials
           securityContext:
             {{- toYaml .Values.steampipe.securityContext | nindent 12 }}
           image: "{{ .Values.steampipe.image.repository }}:{{ .Values.steampipe.image.tag | default .Chart.AppVersion }}"
