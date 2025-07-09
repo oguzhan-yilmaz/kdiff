@@ -12,7 +12,7 @@ helm repo add kdiff-snapshots https://oguzhan-yilmaz.github.io/kdiff/
 helm repo update
 
 # Install the chart
-helm install my-kdiff kdiff-snapshots/kdiff-snapshots
+helm install kdiff-snapshots kdiff-snapshots/kdiff-snapshots
 ```
 
 ### Using ArgoCD
