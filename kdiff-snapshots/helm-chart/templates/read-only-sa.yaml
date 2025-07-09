@@ -1,5 +1,5 @@
 
-{{- if .Values.global.steampipeCreateReadOnlyServiceAccount }}
+{{- if (.Values.global).steampipeCreateReadOnlyServiceAccount }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

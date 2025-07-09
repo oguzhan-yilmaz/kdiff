@@ -122,9 +122,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "kdiff-snapshots.serviceAccountName" -}}
-{{- if .Values.steampipe.serviceAccount.create }}
+{{- if ((.Values.steampipe).serviceAccount).create }}
 {{- default (include "kdiff-snapshots.fullname" .) .Values.steampipe.serviceAccount.name }}
 {{- else }}
-{{- default "default" .Values.steampipe.serviceAccount.name }}
+{{- ((.Values.steampipe).serviceAccount).name | default "default" }}
 {{- end }}
 {{- end }}
