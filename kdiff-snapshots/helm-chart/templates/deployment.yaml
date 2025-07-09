@@ -37,7 +37,9 @@ spec:
             {{- toYaml .Values.steampipe.securityContext | nindent 12 }}
           image: "{{ .Values.steampipe.image.repository }}:{{ .Values.steampipe.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.steampipe.image.pullPolicy }}
-          #command: ["sleep", "3000"]
+          {{- if .Values.debug }}
+          command: ["sleep", "infinity"]
+          {{- end }}
           ports:
             - name: postgres
               containerPort: {{ .Values.steampipe.containerPort }}

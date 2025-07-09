@@ -1,3 +1,6 @@
+# overrides command to sleep inifinity if debug is true
+debug: false
+
 global:
   # steampipeDatabasePassword will be used to set the Steampipe DB password
   # and powerpipe DB Connection URL will get this value from here 
