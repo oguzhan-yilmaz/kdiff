@@ -20,10 +20,14 @@ The primary component for Kubernetes cluster data export:
 ```bash
 # Add the Helm repository
 helm repo add kdiff-snapshots https://oguzhan-yilmaz.github.io/kdiff/
-helm repo update
+helm repo update kdiff-snapshots
 
-# Install with default settings
-helm install kdiff-snapshots kdiff-snapshots/kdiff-snapshots --version 0.0.5
+# Get the default values and change them 
+helm show values kdiff-snapshots > kdiff-snaphots.values.yaml
+
+helm upgrade --install kdiff-snapshots \
+    -f kdiff-snaphots.values.yaml \
+    kdiff-snapshots/kdiff-snapshots
 ```
 
 ### Using ArgoCD
