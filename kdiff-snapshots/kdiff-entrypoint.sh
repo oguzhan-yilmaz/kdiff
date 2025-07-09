@@ -1,17 +1,27 @@
 #!/bin/bash
 
-# Get the current date and time
-DATE=$(date +%Y-%m-%d)
+if [ -n "$INSTALL_PLUGINS" ]; then
+    echo "Installing Plugins: $INSTALL_PLUGINS"
+    for mod in $INSTALL_PLUGINS; do
+        echo "Installing Plugin: $mod"
+        ./steampipe plugin install "$mod" > /dev/null
+    done
+fi
 
-# Get the current time
-TIME=$(date +%H-%M-%S)
+echo "Updating Plugins..."
+./steampipe plugin update --all
 
-# Get the current user
-USER=$(whoami)
+echo "Steampipe Plugins:"
+./steampipe plugin list
 
-echo "Date: $DATE"
-echo "Time: $TIME"
-echo "User: $USER"
+# run the initdb.sh in a sub-shell to not block the steampipe service start
+(bash init-db.sh) &
+
+echo "Starting Steampipe:"
+./steampipe service start --foreground
+
+
+
 
 bash csv-script.sh --debug --out-dir /tmp/kdiff-snapshots
 
