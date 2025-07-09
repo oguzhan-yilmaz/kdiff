@@ -5,6 +5,8 @@ OUT_DIR="k8s-data-csv-$(date +%Y-%m-%d-%H%M)"
 DEBUG=false
 
 # ======= Command Line Arguments =======
+# Add current directory to PATH
+export PATH="$PATH:$(pwd)"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
