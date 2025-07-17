@@ -23,6 +23,8 @@ helm upgrade --install \
   kdiff-snapshots kdiff-snapshots/kdiff-snapshots
 ```
 
+<!-- TODO: below ## Configuration section should be updated periodically -->
+
 ## Configuration
 
 ### Global Configuration
@@ -30,7 +32,12 @@ helm upgrade --install \
 | Parameter                                      | Description                      | Default                              |
 | ---------------------------------------------- | -------------------------------- | ------------------------------------ |
 | `global.steampipeDatabasePassword`             | Database password for Steampipe  | `"Kj8mP2vN9xQ7tR5wL3cY1hB4nM6sD0pF"` |
-| `global.steampipeCreateReadOnlyServiceAccount` | Enable read-only service account | `true`                               |
+
+### Debug Configuration
+
+| Parameter | Description                    | Default |
+| --------- | ------------------------------ | ------- |
+| `debug`   | Enable debug mode (sleep infinity) | `false` |
 
 ### Steampipe Configuration
 
@@ -78,6 +85,22 @@ helm upgrade --install \
 | `steampipe.resources.requests.cpu`    | CPU request    | `""`    |
 | `steampipe.resources.requests.memory` | Memory request | `""`    |
 
+### Pod Configuration
+
+| Parameter                    | Description                    | Default |
+| ---------------------------- | ------------------------------ | ------- |
+| `steampipe.podAnnotations`   | Pod annotations                | `{}`    |
+| `steampipe.nodeSelector`     | Node selector                  | `{}`    |
+| `steampipe.tolerations`      | Pod tolerations                | `[]`    |
+| `steampipe.affinity`         | Pod affinity rules             | `{}`    |
+
+### Credentials and Configuration
+
+| Parameter                    | Description                                    | Default |
+| ---------------------------- | ---------------------------------------------- | ------- |
+| `steampipe.secretCredentials` | Secret credentials for kubeconfig, AWS, etc.   | `{}`    |
+| `steampipe.config`           | Steampipe configuration files (.spc files)     | `{}`    |
+| `steampipe.initDbSqlScripts` | SQL scripts to run during database initialization | `{}`    |
 
 ## Configuration Examples
 
