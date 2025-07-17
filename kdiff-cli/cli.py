@@ -3,7 +3,7 @@ import json
 import subprocess
 from pathlib import Path
 from typing import Optional, Dict
-from helpers import compare_folders, qsv_diff_different_files
+from helpers import compare_folders, qsv_diff_different_files, get_logger
 
 app = typer.Typer()
 
@@ -17,11 +17,12 @@ def plan(
     Compare two folders and show the differences between them
     Uses checksums.txt in each folder for content comparison
     """
+    logger = get_logger()
     try:
         result = compare_folders(left, right)
         typer.echo(json.dumps(result, indent=2))
     except ValueError as e:
-        typer.echo(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise typer.Exit(1)
 
 @app.command()
@@ -29,9 +30,10 @@ def diff(
     left: Path = typer.Argument(..., help="Left folder path to compare", exists=True, dir_okay=True, file_okay=False),
     right: Path = typer.Argument(..., help="Right folder path to compare", exists=True, dir_okay=True, file_okay=False)
 ):
+    logger = get_logger()
     try:
         result = compare_folders(left, right)
-        typer.echo("Comparison completed. Processing different files...")
+        logger.info("Comparison completed. Processing different files...")
         
         # Process different files
         different_files = result.get("different_files", [])
@@ -42,7 +44,7 @@ def diff(
         input()
         
     except ValueError as e:
-        typer.echo(f"Error: {e}")
+        logger.error(f"Error: {e}")
         raise typer.Exit(1)
 
 

@@ -135,20 +135,22 @@ def qsv_diff_different_files(left: Path, right: Path, different_files: list) -> 
     """
     Process different files and run qsv diff on CSV files
     """
+    logger = get_logger()
+    
     # Create diff directory if it doesn't exist
     diff_dir = Path("diff")
     diff_dir.mkdir(exist_ok=True)
     
     if not different_files:
-        typer.echo("No different files found.")
+        logger.info("No different files found.")
         return
     
-    typer.echo(f"Found {len(different_files)} different files to process:")
+    logger.info(f"Found {len(different_files)} different files to process:")
     
     for file_path in different_files:
         # Check if it's a CSV file
         if not file_path.endswith('.csv'):
-            typer.echo(f"Skipping non-CSV file: {file_path}")
+            logger.info(f"Skipping non-CSV file: {file_path}")
             continue
         
         # Construct full paths
@@ -157,10 +159,10 @@ def qsv_diff_different_files(left: Path, right: Path, different_files: list) -> 
         
         # Check if both files exist
         if not left_file.exists():
-            typer.echo(f"Warning: Left file does not exist: {left_file}")
+            logger.warning(f"Left file does not exist: {left_file}")
             continue
         if not right_file.exists():
-            typer.echo(f"Warning: Right file does not exist: {right_file}")
+            logger.warning(f"Right file does not exist: {right_file}")
             continue
         
         # Create output diff file path
@@ -174,16 +176,16 @@ def qsv_diff_different_files(left: Path, right: Path, different_files: list) -> 
             str(right_file)
         ]
         
-        typer.echo(f"Processing: {file_path}")
-        typer.echo(f"Command: {' '.join(cmd)} > {diff_file}")
+        logger.info(f"Processing: {file_path}")
+        logger.debug(f"Command: {' '.join(cmd)} > {diff_file}")
         
         try:
             with open(diff_file, 'w') as output_file:
                 subprocess.run(cmd, stdout=output_file, check=True)
-            typer.echo(f"✓ Diff saved to: {diff_file}")
+            logger.info(f"✓ Diff saved to: {diff_file}")
         except subprocess.CalledProcessError as e:
-            typer.echo(f"✗ Error running qsv diff for {file_path}: {e}")
+            logger.error(f"✗ Error running qsv diff for {file_path}: {e}")
         except Exception as e:
-            typer.echo(f"✗ Unexpected error processing {file_path}: {e}")
+            logger.error(f"✗ Unexpected error processing {file_path}: {e}")
     
-    typer.echo(f"\nDiff processing completed. Results saved in: {diff_dir}")
+    logger.info(f"Diff processing completed. Results saved in: {diff_dir}")
