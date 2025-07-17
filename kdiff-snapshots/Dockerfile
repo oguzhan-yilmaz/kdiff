@@ -1,4 +1,5 @@
-FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:latest
+ARG IMAGE_TAG=latest        
+FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:${IMAGE_TAG}
 
 COPY --chown=steampipe:steampipe *.sh .
 
