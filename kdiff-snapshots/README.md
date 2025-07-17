@@ -9,73 +9,74 @@ A Helm chart for deploying kdiff-snapshots, a Kubernetes-native solution for gen
 ```bash
 # Add the repository
 helm repo add kdiff-snapshots https://oguzhan-yilmaz.github.io/kdiff/
-helm repo update
 
-# Install the chart
-helm install kdiff-snapshots kdiff-snapshots/kdiff-snapshots
-```
+helm repo update kdiff-snapshots
 
-### Using ArgoCD
+# get the values on a file
+helm show values kdiff-snapshots/kdiff-snapshots > kdiff.values.yaml
 
-```bash
-# Apply the ArgoCD application
-kubectl apply -f argocd-application.yaml
+# Install with (hopefully updated) values file
+helm upgrade --install \
+  --namespace kdiff \
+  --create-namespace \
+  -f kdiff.values.yaml \
+  kdiff-snapshots kdiff-snapshots/kdiff-snapshots
 ```
 
 ## Configuration
 
 ### Global Configuration
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `global.steampipeDatabasePassword` | Database password for Steampipe | `"Kj8mP2vN9xQ7tR5wL3cY1hB4nM6sD0pF"` |
-| `global.steampipeCreateReadOnlyServiceAccount` | Enable read-only service account | `true` |
+| Parameter                                      | Description                      | Default                              |
+| ---------------------------------------------- | -------------------------------- | ------------------------------------ |
+| `global.steampipeDatabasePassword`             | Database password for Steampipe  | `"Kj8mP2vN9xQ7tR5wL3cY1hB4nM6sD0pF"` |
+| `global.steampipeCreateReadOnlyServiceAccount` | Enable read-only service account | `true`                               |
 
 ### Steampipe Configuration
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `steampipe.replicaCount` | Number of replicas | `1` |
-| `steampipe.containerPort` | Container port | `9193` |
-| `steampipe.image.repository` | Image repository | `ghcr.io/oguzhan-yilmaz/kdiff-snapshots` |
-| `steampipe.image.pullPolicy` | Image pull policy | `Always` |
-| `steampipe.image.tag` | Image tag (overrides appVersion) | `""` |
-| `steampipe.imagePullSecrets` | Image pull secrets | `[]` |
-| `steampipe.nameOverride` | Name override | `"kdiff-snapshots"` |
-| `steampipe.fullnameOverride` | Full name override | `"kdiff-snapshots"` |
+| Parameter                    | Description                      | Default                                  |
+| ---------------------------- | -------------------------------- | ---------------------------------------- |
+| `steampipe.replicaCount`     | Number of replicas               | `1`                                      |
+| `steampipe.containerPort`    | Container port                   | `9193`                                   |
+| `steampipe.image.repository` | Image repository                 | `ghcr.io/oguzhan-yilmaz/kdiff-snapshots` |
+| `steampipe.image.pullPolicy` | Image pull policy                | `Always`                                 |
+| `steampipe.image.tag`        | Image tag (overrides appVersion) | `""`                                     |
+| `steampipe.imagePullSecrets` | Image pull secrets               | `[]`                                     |
+| `steampipe.nameOverride`     | Name override                    | `"kdiff-snapshots"`                      |
+| `steampipe.fullnameOverride` | Full name override               | `"kdiff-snapshots"`                      |
 
 ### Environment Variables
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
+| Parameter                           | Description                               | Default        |
+| ----------------------------------- | ----------------------------------------- | -------------- |
 | `steampipe.envVars.INSTALL_PLUGINS` | Space-separated list of Steampipe plugins | `"kubernetes"` |
-| `steampipe.envVars.AWS_PROFILE` | AWS profile for AWS plugin | `""` |
-| `steampipe.secretEnvVars` | Secret environment variables | `{}` |
+| `steampipe.envVars.AWS_PROFILE`     | AWS profile for AWS plugin                | `""`           |
+| `steampipe.secretEnvVars`           | Secret environment variables              | `{}`           |
 
 ### Security Configuration
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `steampipe.securityContext.runAsUser` | User ID | `11234` |
-| `steampipe.securityContext.runAsGroup` | Group ID | `11234` |
-| `steampipe.securityContext.runAsNonRoot` | Run as non-root | `true` |
-| `steampipe.podSecurityContext.fsGroup` | File system group | `11234` |
+| Parameter                                | Description       | Default |
+| ---------------------------------------- | ----------------- | ------- |
+| `steampipe.securityContext.runAsUser`    | User ID           | `11234` |
+| `steampipe.securityContext.runAsGroup`   | Group ID          | `11234` |
+| `steampipe.securityContext.runAsNonRoot` | Run as non-root   | `true`  |
+| `steampipe.podSecurityContext.fsGroup`   | File system group | `11234` |
 
 ### Service Configuration
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
+| Parameter                | Description  | Default     |
+| ------------------------ | ------------ | ----------- |
 | `steampipe.service.type` | Service type | `ClusterIP` |
-| `steampipe.service.port` | Service port | `9193` |
+| `steampipe.service.port` | Service port | `9193`      |
 
 ### Resource Configuration
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `steampipe.resources.limits.cpu` | CPU limit | `""` |
-| `steampipe.resources.limits.memory` | Memory limit | `""` |
-| `steampipe.resources.requests.cpu` | CPU request | `""` |
-| `steampipe.resources.requests.memory` | Memory request | `""` |
+| Parameter                             | Description    | Default |
+| ------------------------------------- | -------------- | ------- |
+| `steampipe.resources.limits.cpu`      | CPU limit      | `""`    |
+| `steampipe.resources.limits.memory`   | Memory limit   | `""`    |
+| `steampipe.resources.requests.cpu`    | CPU request    | `""`    |
+| `steampipe.resources.requests.memory` | Memory request | `""`    |
 
 
 ## Configuration Examples
@@ -162,41 +163,10 @@ steampipe:
       }
 ```
 
-## Usage
 
-### Installation Commands
-
-```bash
-# Install with custom values
-helm install my-kdiff kdiff-snapshots/kdiff-snapshots \
-  --set steampipe.envVars.INSTALL_PLUGINS="kubernetes aws"
-
-# Install with values file
-helm install my-kdiff kdiff-snapshots/kdiff-snapshots -f values.yaml
-
-# Install in specific namespace
-helm install my-kdiff kdiff-snapshots/kdiff-snapshots \
-  --namespace steampipe \
-  --create-namespace
-```
-
-### Upgrade Commands
+### Uninstall
 
 ```bash
-# Upgrade with new values
-helm upgrade my-kdiff kdiff-snapshots/kdiff-snapshots \
-  --set steampipe.image.tag="latest"
-
-# Upgrade with values file
-helm upgrade my-kdiff kdiff-snapshots/kdiff-snapshots -f values.yaml
-```
-
-### Uninstall Commands
-
-```bash
-# Uninstall the release
-helm uninstall my-kdiff
-
 # Uninstall and remove CRDs
-helm uninstall my-kdiff --cascade=foreground
+helm uninstall my-kdiff --namespace kdiff
 ```
