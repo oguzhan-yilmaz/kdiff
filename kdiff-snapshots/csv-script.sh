@@ -53,10 +53,18 @@ log_debug "Creating output directory: $OUT_DIR"
 mkdir -p "$OUT_DIR"
 
 log_info "Output directory: $OUT_DIR"
+# Get current context and cluster info
+log_info "Getting current Kubernetes context and cluster info"
+current_context=$(kubectl config current-context)
+log_info "Current context: $current_context"
+
+cluster_info=$(kubectl cluster-info)
+log_info "Cluster info:"
+log_info "$cluster_info"
 
 # ======= Query Tables =======
 
-# LIMIT_STR="LIMIT 3"
+LIMIT_STR="LIMIT 3"
 log_debug "Querying kubernetes tables with limit: $LIMIT_STR"
 tables=$(steampipe query --header=false --output=csv "SELECT table_name FROM information_schema.tables WHERE table_schema = 'kubernetes' $LIMIT_STR")
 log_debug "Found tables: $tables"
@@ -79,8 +87,8 @@ log_debug "Script completed successfully"
 
 
 
-# CRD_LIMIT_STR="LIMIT 5"
-crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition;"
+CRD_LIMIT_STR="LIMIT 5"
+crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $CRD_LIMIT_STR;"
 crd_names=$(steampipe query --header=false --output=csv "$crd_sql")
 CRD_OUT_DIR="$OUT_DIR/crds"
 
@@ -98,4 +106,15 @@ for crd_name in $crd_names; do
     log_debug "Completed processing CRD: $crd_name"
 done
 
+
+# Generate checksums for all CSV files
+(
+    echo "Generating checksums for all CSV files in ${OUT_DIR}"
+    cd "${OUT_DIR}"
+    find . -name "*.csv" -type f -exec sha256sum {} \; > checksums.txt
+)
+
+
 log_debug "Script completed successfully"
+
+
