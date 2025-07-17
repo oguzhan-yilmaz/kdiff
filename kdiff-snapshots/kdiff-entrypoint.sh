@@ -21,8 +21,23 @@ echo "Starting Steampipe:"
 ./steampipe service start --foreground
 
 
-
-
+# snapshot kubernetes state
 bash csv-script.sh --debug --out-dir /tmp/kdiff-snapshots
 
+ls /tmp/kdiff-snapshots
+
+
+
+# tar the snapshot
+
+
+# upload the snapshot to s3
+
+
+
+
+
 ls -al /tmp/kdiff-snapshots
+
+# TODO: remove this later, for debugging
+sleep infinity
