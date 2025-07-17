@@ -5,9 +5,6 @@ global:
   # steampipeDatabasePassword will be used to set the Steampipe DB password
   # and powerpipe DB Connection URL will get this value from here 
   steampipeDatabasePassword: "Kj8mP2vN9xQ7tR5wL3cY1hB4nM6sD0pF"
-  # Enable to have Read Only access to the deployed cluster 
-  steampipeCreateReadOnlyServiceAccount: true
-
 
 
 steampipe:
