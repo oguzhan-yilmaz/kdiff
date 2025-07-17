@@ -1,9 +1,26 @@
-import hashlib
 import typer
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 
 app = typer.Typer()
+
+def load_checksums(checksums_file: Path) -> Dict[str, str]:
+    """
+    Load checksums from a checksums.txt
+    Expected format: hash filepath (one per line)
+    Returns: dict mapping filepath to hash
+    """
+    checksums = {}
+    if checksums_file.exists():
+        with open(checksums_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):  # Skip empty lines and comments
+                    parts = line.split(None, 1)  # Split on whitespace, max 1 split
+                    if len(parts) == 2:
+                        hash_value, filepath = parts
+                        checksums[filepath] = hash_value
+    return checksums
 
 @app.command()
 def diff(
@@ -12,6 +29,7 @@ def diff(
 ):
     """
     Compare two folders and show the differences between them
+    Uses checksums.txt in each folder for content comparison
     """
     # Check if paths are directories
     left_is_dir = left.is_dir()
@@ -23,10 +41,16 @@ def diff(
         typer.echo("Error: Both paths must be directories")
         raise typer.Exit(1)
     elif (left_is_dir and right_is_dir):
-        # Compare the two folders
-        # 1. Get the list of files in both folders
-        left_files = set(f.relative_to(left) for f in left.rglob('*') if f.is_file())
-        right_files = set(f.relative_to(right) for f in right.rglob('*') if f.is_file())
+        # Load checksums from both folders
+        left_checksums_file = left / "checksums.txt"
+        right_checksums_file = right / "checksums.txt"
+        
+        left_checksums = load_checksums(left_checksums_file)
+        right_checksums = load_checksums(right_checksums_file)
+        
+        # Get the list of files from checksums (excluding checksums.txt itself)
+        left_files = set(left_checksums.keys())
+        right_files = set(right_checksums.keys())
         
         # 2. Create three lists: left_only, right_only, both
         left_only = list(left_files - right_files)
@@ -46,8 +70,8 @@ def diff(
         identical_count = 0
         different_count = 0
         for f in sorted(both):
-            left_hash = hashlib.sha256((left / f).read_bytes()).hexdigest()
-            right_hash = hashlib.sha256((right / f).read_bytes()).hexdigest()
+            left_hash = left_checksums.get(f)
+            right_hash = right_checksums.get(f)
             if left_hash != right_hash:
                 typer.echo(f"  {f} (contents differ)")
                 different_count += 1
