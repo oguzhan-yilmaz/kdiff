@@ -22,6 +22,26 @@ def plan(
         typer.echo(f"Error: {e}")
         raise typer.Exit(1)
 
+@app.command()
+def diff(
+    left: Path = typer.Argument(..., help="Left folder path to compare", exists=True, dir_okay=True, file_okay=False),
+    right: Path = typer.Argument(..., help="Right folder path to compare", exists=True, dir_okay=True, file_okay=False)
+):
+    """
+    Compare two folders and wait for further input
+    Uses checksums.txt in each folder for content comparison
+    """
+    try:
+        result = compare_folders(left, right)
+        typer.echo("result is got")
+        
+        
+        
+    except ValueError as e:
+        typer.echo(f"Error: {e}")
+        raise typer.Exit(1)
+
+
 def main():
     app()
 
