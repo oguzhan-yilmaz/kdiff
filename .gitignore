@@ -5,7 +5,8 @@ kdiff-snapshots/todo.excalidraw
 kdiff-snapshots/helm-chart/*.sh
 
 kdiff-snapshots/my-values.yaml
-
+_data/
+.old-entry
 
 
 ### ------- auto gen - start ------- ###
