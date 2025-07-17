@@ -64,7 +64,7 @@ log_info "$cluster_info"
 
 # ======= Query Tables =======
 
-LIMIT_STR="LIMIT 3"
+# LIMIT_STR="LIMIT 3"
 log_debug "Querying kubernetes tables with limit: $LIMIT_STR"
 tables=$(steampipe query --header=false --output=csv "SELECT table_name FROM information_schema.tables WHERE table_schema = 'kubernetes' $LIMIT_STR")
 log_debug "Found tables: $tables"
@@ -87,7 +87,7 @@ log_debug "Script completed successfully"
 
 
 
-CRD_LIMIT_STR="LIMIT 5"
+# CRD_LIMIT_STR="LIMIT 5"
 crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $CRD_LIMIT_STR;"
 crd_names=$(steampipe query --header=false --output=csv "$crd_sql")
 CRD_OUT_DIR="$OUT_DIR/crds"
@@ -97,10 +97,10 @@ log_debug "Found crd_names: $crd_names"
 for crd_name in $crd_names; do
     # Replace dots and dashes with underscores in CRD name
 
-    log_info "Processing CRD: $crd_name"
+    log_info "Processing CRD: $crd_name -- $crd_sql_query"
     mkdir -p "$CRD_OUT_DIR"
     crd_sql_query="SELECT * FROM $crd_name"
-    log_debug "Processing CRD: $crd_name -- $crd_sql_query"
+    # log_debug "Processing CRD: $crd_name -- $crd_sql_query"
     echo "$crd_sql_query" \
         | steampipe query --output csv > "$CRD_OUT_DIR/${crd_name}.csv"
     log_debug "Completed processing CRD: $crd_name"
