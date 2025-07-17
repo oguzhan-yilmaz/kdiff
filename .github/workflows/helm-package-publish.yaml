@@ -45,8 +45,8 @@ jobs:
       - name: Patch argocd application yaml
         id: argocd-application
         run: |
-          VERSIONED_ARGOCD_APP_YAML="argocd-application-${{ steps.helm_package.outputs.package-version}}.yaml"
-          cp argocd-application.yaml "$VERSIONED_ARGOCD_APP_YAML"
+          VERSIONED_ARGOCD_APP_YAML="kdiff-snapshots.argocd-app.${{ steps.helm_package.outputs.package-version}}.yaml"
+          cp kdiff-snaphots.argocd-app.yaml "$VERSIONED_ARGOCD_APP_YAML"
           echo "Current targetRevision: $(yq '.spec.source.targetRevision' $VERSIONED_ARGOCD_APP_YAML)"
           yq e '.spec.source.targetRevision = "${{ steps.helm_package.outputs.package-version}}"' --inplace $VERSIONED_ARGOCD_APP_YAML
           echo "Patched targetRevision: $(yq '.spec.source.targetRevision' $VERSIONED_ARGOCD_APP_YAML)"
@@ -78,10 +78,10 @@ jobs:
             # TODO: release docs
             **ArgoCD Application (current version)**
 
-            First, download the `argocd-application-X.Y.Z.yaml` from assets.
+            First, download the `kdiff-snapshots.argocd-app.X.Y.Z.yaml` from assets.
 
             ```bash
-            kubectl apply -f argocd-application-X.Y.Z.yaml
+            kubectl apply -f kdiff-snapshots.argocd-app.X.Y.Z.yaml
             ```
 
       - name: print release upload output

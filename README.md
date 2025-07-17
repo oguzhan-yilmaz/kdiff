@@ -34,7 +34,7 @@ helm upgrade --install kdiff-snapshots \
 
 ```bash
 # Apply the ArgoCD application for GitOps deployment
-kubectl apply -f argocd-application.yaml
+kubectl apply -f kdiff-snaphots.argocd-app.yaml
 ```
 
 ## Components
