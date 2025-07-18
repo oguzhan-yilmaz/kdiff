@@ -23,10 +23,10 @@ helm repo add kdiff-snapshots https://oguzhan-yilmaz.github.io/kdiff/
 helm repo update kdiff-snapshots
 
 # Get the default values and change them 
-helm show values kdiff-snapshots > kdiff-snaphots.values.yaml
+helm show values kdiff-snapshots > kdiff-snapshots.values.yaml
 
 helm upgrade --install kdiff-snapshots \
-    -f kdiff-snaphots.values.yaml \
+    -f kdiff-snapshots.values.yaml \
     kdiff-snapshots/kdiff-snapshots
 ```
 
@@ -34,7 +34,7 @@ helm upgrade --install kdiff-snapshots \
 
 ```bash
 # Apply the ArgoCD application for GitOps deployment
-kubectl apply -f kdiff-snaphots.argocd-app.yaml
+kubectl apply -f kdiff-snapshots.argocd-app.yaml
 ```
 
 ## Components

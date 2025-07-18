@@ -46,7 +46,7 @@ jobs:
         id: argocd-application
         run: |
           VERSIONED_ARGOCD_APP_YAML="kdiff-snapshots.argocd-app.${{ steps.helm_package.outputs.package-version}}.yaml"
-          cp kdiff-snaphots.argocd-app.yaml "$VERSIONED_ARGOCD_APP_YAML"
+          cp kdiff-snapshots.argocd-app.yaml "$VERSIONED_ARGOCD_APP_YAML"
           echo "Current targetRevision: $(yq '.spec.source.targetRevision' $VERSIONED_ARGOCD_APP_YAML)"
           yq e '.spec.source.targetRevision = "${{ steps.helm_package.outputs.package-version}}"' --inplace $VERSIONED_ARGOCD_APP_YAML
           echo "Patched targetRevision: $(yq '.spec.source.targetRevision' $VERSIONED_ARGOCD_APP_YAML)"
