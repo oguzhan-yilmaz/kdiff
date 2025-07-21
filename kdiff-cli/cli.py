@@ -10,8 +10,20 @@ app = typer.Typer()
 
 @app.command()
 def plan(
-    left: Path = typer.Argument(..., help="Left folder path to compare", exists=True, dir_okay=True, file_okay=False),
-    right: Path = typer.Argument(..., help="Right folder path to compare", exists=True, dir_okay=True, file_okay=False)
+    left: Path = typer.Argument(
+        ...,
+        help="Left folder path to compare",
+        exists=True,
+        dir_okay=True,
+        file_okay=False,
+    ),
+    right: Path = typer.Argument(
+        ...,
+        help="Right folder path to compare",
+        exists=True,
+        dir_okay=True,
+        file_okay=False,
+    ),
 ):
     """
     Compare two folders and show the differences between them
@@ -25,24 +37,33 @@ def plan(
         logger.error(f"Error: {e}")
         raise typer.Exit(1)
 
+
 @app.command()
 def diff(
-    left: Path = typer.Argument(..., help="Left folder path to compare", exists=True, dir_okay=True, file_okay=False),
-    right: Path = typer.Argument(..., help="Right folder path to compare", exists=True, dir_okay=True, file_okay=False)
+    left: Path = typer.Argument(
+        ...,
+        help="Left folder path to compare",
+        exists=True,
+        dir_okay=True,
+        file_okay=False,
+    ),
+    right: Path = typer.Argument(
+        ...,
+        help="Right folder path to compare",
+        exists=True,
+        dir_okay=True,
+        file_okay=False,
+    ),
 ):
     logger = get_logger()
     try:
         result = compare_folders(left, right)
         logger.info("Comparison completed. Processing different files...")
-        
+
         # Process different files
         different_files = result.get("different_files", [])
         qsv_diff_different_files(left, right, different_files)
-        
-        # Wait for user input to continue
-        typer.echo("\nPress Enter to continue...")
-        input()
-        
+
     except ValueError as e:
         logger.error(f"Error: {e}")
         raise typer.Exit(1)
@@ -51,6 +72,6 @@ def diff(
 def main():
     app()
 
+
 if __name__ == "__main__":
     main()
-
