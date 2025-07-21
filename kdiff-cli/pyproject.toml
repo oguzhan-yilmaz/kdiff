@@ -1,9 +1,0 @@
-[project]
-name = "kdiff"
-version = "0.1.0"
-description = " Snapshot your Kubernetes state periodically and compare them with kdiff CLI "
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "typer>=0.16.0",
-]
