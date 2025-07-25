@@ -2,6 +2,29 @@ apiVersion: v1
 entries:
   kdiff-snapshots:
   - apiVersion: v2
+    appVersion: 0.0.17
+    created: "2025-07-25T22:30:11.335334624Z"
+    description: deploy a cronjob that runs kdiff-snapshots(kubernetes state snapshots)
+      and uploads them to s3
+    digest: 7977cb3290b1d21c6a20ba843e5deedcb9c4fd0aa90f8c5534024f1393a8a58f
+    home: https://github.com/oguzhan-yilmaz/kdiff
+    keywords:
+    - kdiff
+    - snapshots
+    - steampipe
+    - kubernetes
+    - etcd-snapshots
+    - monitoring
+    maintainers:
+    - name: Oguzhan Yilmaz
+    name: kdiff-snapshots
+    sources:
+    - https://github.com/oguzhan-yilmaz/kdiff
+    type: application
+    urls:
+    - https://github.com/oguzhan-yilmaz/kdiff/releases/download/v0.0.17/kdiff-snapshots-0.0.17.tgz
+    version: 0.0.17
+  - apiVersion: v2
     appVersion: 0.0.16
     created: "2025-07-18T07:11:34.868530071Z"
     description: A Helm chart for Kubernetes
@@ -81,4 +104,4 @@ entries:
     urls:
     - https://github.com/oguzhan-yilmaz/kdiff/releases/download/v0.0.5/kdiff-snapshots-0.0.5.tgz
     version: 0.0.5
-generated: "2025-07-18T07:11:34.867485147Z"
+generated: "2025-07-25T22:30:11.33474463Z"
