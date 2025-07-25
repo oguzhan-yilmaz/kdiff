@@ -1,7 +1,6 @@
 FROM amazon/aws-cli:latest as awscli
 
-ARG IMAGE_TAG=latest        
-FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:${IMAGE_TAG}
+FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:latest
 
 # get the aws cli from it's docker image
 COPY --from=awscli /usr/local/aws-cli /usr/local/aws-cli
