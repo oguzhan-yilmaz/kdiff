@@ -1,132 +1,171 @@
-# overrides command to sleep inifinity if debug is true
+# KDiff Snapshots Helm Chart Configuration
+# This chart deploys a CronJob that runs KDiff snapshots using Steampipe
+
+# Name overrides
+nameOverride: ""
+fullnameOverride: ""
+
+# Debug mode - when enabled, the container will sleep infinitely instead of running the job
 debug: false
 
+# Global configuration
 global:
-  # steampipeDatabasePassword will be used to set the Steampipe DB password
-  # and powerpipe DB Connection URL will get this value from here 
+  # Steampipe database password used for DB connections
   steampipeDatabasePassword: "Kj8mP2vN9xQ7tR5wL3cY1hB4nM6sD0pF"
 
-# CronJob configuration
+# CronJob Configuration
 # https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
-timeZone: 'Asia/Istanbul'  # optional -- https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-schedule: "00 20 * * *"    # https://crontab.guru/#00_20_*_*_*
+timeZone: 'Asia/Istanbul'  # Timezone for the cron job
+schedule: "00 20 * * *"    # Cron schedule (daily at 8 PM)
 
-steampipe:
-  # Additional Secret Env Vars for steampipe
-  secretEnvVars: {}
+# Container image configuration
+image:
+  repository: ghcr.io/oguzhan-yilmaz/kdiff-snapshots
+  tag: ""  # Defaults to Chart.AppVersion
+  pullPolicy: Always
 
-  # Define non-secret Env Vars for steampipe
-  envVars:
-    # INSTALL_PLUGINS will install steampipe plugins at runtime.
-    #   Note: INSTALL_PLUGINS env. var. should be space separated
-    # Take look at available plugins: https://hub.steampipe.io/
-    # INSTALL_PLUGINS: "steampipe kubernetes aws"
+# Image pull secrets for private registries
+imagePullSecrets: []
 
-    # following yaml syntax (>) will merge newlines with spaces
-    INSTALL_PLUGINS: >
-      kubernetes
-    
-    # set the default aws profile if you are passing aws credentials, or use .spc files
-    # AWS_PROFILE: "default" 
-
-  # secretCredentials will create Secret and
-  # will put the file content to  '~/{directory}/{filename}'
-  # useful for passing aws, gcp, kubeconfig credentials
-  secretCredentials: {}
-    # - name: kubeconfig  
-    #   directory: ".kube"
-    #   filename: "config"
-    #   content: |
-    #     example kubeconfig
-
-  # .config is used to create a ConfigMap
-  # and will be mounted to ~/.steampipe/config/{key} — the filename being the key  
-  # use it to configure steampipe: https://steampipe.io/docs/reference/config-files/overview
-  config: {}
-    # kubernetes.spc: |
-    #   connection "kubernetes" {
-    #     plugin         = "kubernetes"
-    #     config_path    = "~/.kube/config"
-    #     config_context = "myCluster"
-    #     source_types   = ["deployed"]
-    #   }
-
-  initDbSqlScripts: {}
-
-  containerPort: 9193
-
-  image:
-    repository: ghcr.io/oguzhan-yilmaz/kdiff-snapshots
-    pullPolicy: Always
-    # Overrides the image tag whose default is the chart appVersion.
-
-  imagePullSecrets: []
-  nameOverride: "kdiff-snapshots"
-  fullnameOverride: "kdiff-snapshots"
-
-  podAnnotations: {}
-
-  podSecurityContext:    
-    fsGroup: 11234
-
-  securityContext:
-    runAsUser: 11234
-    runAsGroup: 11234
-    runAsNonRoot: true
-
-  resources: {}
-    # We usually recommend not to specify default resources and to leave this as a conscious
-    # choice for the user. This also increases chances charts run on environments with little
-    # resources, such as Minikube. If you do want to specify resources, uncomment the following
-    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-    # limits:
-    #   cpu: 100m
-    #   memory: 128Mi
-    # requests:
-    #   cpu: 100m
-    #   memory: 128Mi
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
+# Container port for Steampipe
+containerPort: 9193
 
 
-  serviceAccount:
-    create: true
-    annotations: {}
-    # If you want to use an existing service account, set create to false and specify the name
-    # create: false
-    # name: "existing-service-account"
+# Pod configuration
+podAnnotations: {}
+podSecurityContext:    
+  fsGroup: 11234
 
-# Additional configuration for the cronjob
-secretEnvVars:
+# Container security context
+securityContext:
+  runAsUser: 11234
+  runAsGroup: 11234
+  runAsNonRoot: true
+
+# Resource limits and requests
+resources: {}
+# Example:
+# limits:
+#   cpu: 100m
+#   memory: 128Mi
+# requests:
+#   cpu: 100m
+#   memory: 128Mi
+
+# Node selector for pod placement
+nodeSelector: {}
+
+# Tolerations for pod scheduling
+tolerations: []
+
+# Affinity rules for pod placement
+affinity: {}
+
+# Service Account configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  # name: "existing-service-account"  # Use existing SA (set create: false)
+  
+  # AWS IRSA (IAM Roles for Service Accounts) configuration
+  # When enabled, the ServiceAccount will assume an IAM role instead of using static credentials
+  awsIrsa:
+    enabled: false
+    # The ARN of the IAM role to assume
+    roleArn: ""
+    # AWS region for the role
+    region: "eu-west-1"
+    # Additional IAM policy ARNs to attach (optional)
+    additionalPolicyArns: []
+    # Example:
+    # additionalPolicyArns:
+    #   - "arn:aws:iam::123456789012:policy/MyCustomPolicy"
+
+# Environment variables for Steampipe
+envVars:
+  # Install Steampipe plugins at runtime (space-separated)
+  # Available plugins: https://hub.steampipe.io/
+  INSTALL_PLUGINS: >
+    kubernetes
+  
+  # AWS profile configuration (if using AWS credentials)
+  # AWS_PROFILE: "default"
+
+# Secret environment variables for Steampipe
+secretEnvVars: {}
+# Example:
+# AWS_ACCESS_KEY_ID: "your-access-key"
+# AWS_SECRET_ACCESS_KEY: "your-secret-key"
+
+# Credential files to mount as secrets
+# Files will be placed in ~/{directory}/{filename}
+secretCredentials: {}
+# Example:
+# - name: kubeconfig
+#   directory: ".kube"
+#   filename: "config"
+#   content: |
+#     apiVersion: v1
+#     kind: Config
+#     clusters:
+#     - name: my-cluster
+#       cluster:
+#         server: https://kubernetes.default.svc
+
+# Steampipe configuration files
+# Files will be mounted to ~/.steampipe/config/{key}
+# Documentation: https://steampipe.io/docs/reference/config-files/overview
+config: {}
+# Example:
+# kubernetes.spc: |
+#   connection "kubernetes" {
+#     plugin         = "kubernetes"
+#     config_path    = "~/.kube/config"
+#     config_context = "myCluster"
+#     source_types   = ["deployed"]
+#   }
+
+# SQL scripts to run during database initialization
+initDbSqlScripts: {}
+# Example:
+# init.sql: |
+#   CREATE TABLE IF NOT EXISTS custom_table (
+#     id SERIAL PRIMARY KEY,
+#     name VARCHAR(255)
+#   );
+
+# KDiff secret environment variables (used when AWS IRSA is disabled)
+kdiffSecretEnvVars:
   AWS_ACCESS_KEY_ID: ""
   AWS_SECRET_ACCESS_KEY: ""
   AWS_DEFAULT_REGION: "eu-west-1"
-  # AWS_ENDPOINT_URL_S3: 'https://s3.amazonaws.com'
+  # AWS_ENDPOINT_URL_S3: 'https://s3.amazonaws.com'  # For S3-compatible storage
   S3_BUCKET_NAME: ""
   S3_UPLOAD_PREFIX: "my-kdiff-snapshots/dev/"
 
+# Environment variables from existing secrets
 envVarSecretReferences: []
-#  - name: KDIFF_ADMIN_PASSWORD
-#  # remove the .secretEnvVars.KDIFF_ADMIN_PASSWORD if you use this
-#    valueFrom:
-#      secretKeyRef:
-#        name: kdiff-initial-admin-secret
-#        key: password
+# Example:
+# - name: KDIFF_ADMIN_PASSWORD
+#   valueFrom:
+#     secretKeyRef:
+#       name: kdiff-initial-admin-secret
+#       key: password
 
-custom_command: []
-#  - "/bin/bash"
-#  - "-c"
-#  - "echo 'Custom command executed'"
+# Custom command to run instead of default entrypoint
+customCommand: []
+# Example:
+# - "/bin/bash"
+# - "-c"
+# - "echo 'Custom command executed'"
 
+# Additional Kubernetes objects to create
 extraObjects: []
-#  - apiVersion: v1
-#    kind: Secret
-#    metadata:
-#      name: extra-secret
-#    type: Opaque
-#    stringData:
-#      AAA: BBB
+# Example:
+# - apiVersion: v1
+#   kind: Secret
+#   metadata:
+#     name: extra-secret
+#   type: Opaque
+#   stringData:
+#     AAA: BBB
