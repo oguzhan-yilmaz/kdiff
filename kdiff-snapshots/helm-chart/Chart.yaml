@@ -1,6 +1,6 @@
 apiVersion: v2
 name: kdiff-snapshots
-description: deploy a cronjob that runs kdiff-snapshots(kubernetes state snapshots) and uploads them to s3
+description: Snapshot your Kubernetes state periodically and compare changes with kdiff CLI
 type: application
 version: 0.1.0
 appVersion: "0.0.12"
