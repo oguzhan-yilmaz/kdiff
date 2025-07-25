@@ -5,8 +5,8 @@ metadata:
   name: {{ include "kdiff-snapshots.fullname" . }}-config
   labels:
     {{- include "kdiff-snapshots.labels" . | nindent 4 }}
-{{- if eq (len (.Values.steampipe.config | default (dict))) 0 }}
+{{- if eq (len (.Values.config | default (dict))) 0 }}
 data: {}
 {{- else }}
-data: {{ toYaml .Values.steampipe.config | nindent 2 }}
+data: {{ toYaml .Values.config | nindent 2 }}
 {{- end }}

@@ -17,21 +17,21 @@ spec:
     spec:
       template:
         metadata:
-          {{- with .Values.steampipe.podAnnotations }}
+          {{- with .Values.podAnnotations }}
           annotations:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           labels:
             {{- include "kdiff-snapshots.selectorLabels" . | nindent 12 }}
         spec:
-          {{- with .Values.steampipe.imagePullSecrets }}
+          {{- with .Values.imagePullSecrets }}
           imagePullSecrets:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           automountServiceAccountToken: true
           serviceAccountName: {{ include "kdiff-snapshots.serviceAccountName" . }}
           securityContext:
-            {{- toYaml .Values.steampipe.podSecurityContext | nindent 12 }}
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
           containers:
             - name: {{ include "kdiff-snapshots.fullname" . }}
               envFrom:
@@ -39,7 +39,7 @@ spec:
                   name: {{ include "kdiff-snapshots.fullname" . }}-cm-env-vars
               - secretRef:
                   name: {{ include "kdiff-snapshots.fullname" . }}-credentials
-              {{- if .Values.secretEnvVars }}
+              {{- if and .Values.kdiffSecretEnvVars (not .Values.serviceAccount.awsIrsa.enabled) }}
               - secretRef:
                   name: {{ include "kdiff-snapshots.fullname" . }}-secret-env-vars
               {{- end }}
@@ -47,45 +47,59 @@ spec:
               env:
                 {{- toYaml .Values.envVarSecretReferences | nindent 16 }}
               {{- end }}
+              {{- if .Values.serviceAccount.awsIrsa.enabled }}
+              env:
+                {{- if .Values.envVarSecretReferences }}
+                {{- toYaml .Values.envVarSecretReferences | nindent 16 }}
+                {{- end }}
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.serviceAccount.awsIrsa.region | quote }}
+                - name: AWS_ROLE_ARN
+                  value: {{ .Values.serviceAccount.awsIrsa.roleArn | quote }}
+                {{- if .Values.kdiffSecretEnvVars.S3_BUCKET_NAME }}
+                - name: S3_BUCKET_NAME
+                  value: {{ .Values.kdiffSecretEnvVars.S3_BUCKET_NAME | quote }}
+                {{- end }}
+                {{- if .Values.kdiffSecretEnvVars.S3_UPLOAD_PREFIX }}
+                - name: S3_UPLOAD_PREFIX
+                  value: {{ .Values.kdiffSecretEnvVars.S3_UPLOAD_PREFIX | quote }}
+                {{- end }}
+                {{- if .Values.kdiffSecretEnvVars.AWS_ENDPOINT_URL_S3 }}
+                - name: AWS_ENDPOINT_URL_S3
+                  value: {{ .Values.kdiffSecretEnvVars.AWS_ENDPOINT_URL_S3 | quote }}
+                {{- end }}
+              {{- end }}
               securityContext:
-                {{- toYaml .Values.steampipe.securityContext | nindent 16 }}
-              image: "{{ .Values.steampipe.image.repository }}:{{ .Values.steampipe.image.tag | default .Chart.AppVersion }}"
-              imagePullPolicy: {{ .Values.steampipe.image.pullPolicy }}
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               {{- if .Values.debug }}
               command: ["sleep", "infinity"]
-              {{- else if .Values.custom_command }}
+              {{- else if .Values.customCommand }}
               command: 
-                {{- toYaml .Values.custom_command | nindent 16 }}
+                {{- toYaml .Values.customCommand | nindent 16 }}
               {{- end }}
               ports:
                 - name: postgres
-                  containerPort: {{ .Values.steampipe.containerPort }}
+                  containerPort: {{ .Values.containerPort }}
                   protocol: TCP
-              livenessProbe:
-                exec:
-                  command:
-                  - bash
-                  - ./healthcheck.sh
-                initialDelaySeconds: 60
-                periodSeconds: 10
-                failureThreshold: 6
-              {{- if .Values.steampipe.resources }}
+              {{- if .Values.resources }}
               resources:
-                {{- toYaml .Values.steampipe.resources | nindent 16 }}
+                {{- toYaml .Values.resources | nindent 16 }}
               {{- else }}
               resources: {}
               {{- end }}
               {{- include "kdiff-snapshots.containerVolumeMounts" . | indent 14}}
           {{- include "kdiff-snapshots.containerVolumes" . | indent 10}}
-          {{- with .Values.steampipe.nodeSelector }}
+          {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.steampipe.affinity }}
+          {{- with .Values.affinity }}
           affinity:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.steampipe.tolerations }}
+          {{- with .Values.tolerations }}
           tolerations:
             {{- toYaml . | nindent 12 }}
           {{- end }}

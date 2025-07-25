@@ -5,8 +5,8 @@ metadata:
   name: {{ include "kdiff-snapshots.fullname" . }}-initdb-sql-files
   labels:
     {{- include "kdiff-snapshots.labels" . | nindent 4 }}
-{{- if eq (len (.Values.steampipe.initDbSqlScripts | default (dict))) 0 }}
+{{- if eq (len (.Values.initDbSqlScripts | default (dict))) 0 }}
 data: {}
 {{- else }}
-data: {{ toYaml .Values.steampipe.initDbSqlScripts | nindent 2 }}
+data: {{ toYaml .Values.initDbSqlScripts | nindent 2 }}
 {{- end }}

@@ -1,19 +1,19 @@
 {{/*
 */}}
 {{- define "kdiff-snapshots.containerVolumeMounts" -}}
-{{- if or (or .Values.steampipe.config .Values.steampipe.secretCredentials) .Values.steampipe.initDbSqlScripts }}
+{{- if or (or .Values.config .Values.secretCredentials) .Values.initDbSqlScripts }}
 volumeMounts:
-  {{- range $key, $value := .Values.steampipe.config }}
+  {{- range $key, $value := .Values.config }}
   - name: steampipe-config-volume
     mountPath: /home/steampipe/.steampipe/config/{{ $key }}
     subPath: {{ $key }}
   {{- end }}
-  {{- range $config := .Values.steampipe.secretCredentials }}
+  {{- range $config := .Values.secretCredentials }}
   - name: steampipe-credentials-volume
     mountPath: /home/steampipe/{{ $config.directory }}/{{ $config.filename }}
     subPath: {{ $config.filename }}
   {{- end }}
-  {{- range $key, $value := .Values.steampipe.initDbSqlScripts }}
+  {{- range $key, $value := .Values.initDbSqlScripts }}
   - name: steampipe-initdb-volume
     mountPath: /home/steampipe/initdb-sql-scripts/{{ $key }}
     subPath: {{ $key }}
@@ -25,37 +25,37 @@ volumeMounts: []
 
 
 {{- define "kdiff-snapshots.containerVolumes" -}}
-{{- if or (or .Values.steampipe.config .Values.steampipe.secretCredentials) .Values.steampipe.initDbSqlScripts }}
+{{- if or (or .Values.config .Values.secretCredentials) .Values.initDbSqlScripts }}
 volumes:
-  {{- if or .Values.steampipe.config }}
+  {{- if or .Values.config }}
   - name: steampipe-config-volume
     configMap:
       name: {{ include "kdiff-snapshots.fullname" . }}-config
       optional: true
       items:
-      {{- range $key, $value := .Values.steampipe.config }}
+      {{- range $key, $value := .Values.config }}
       - key: {{ $key }}
         path: {{ $key }}  # same as subPath
       {{- end }}
   {{- end }}
-  {{- if or .Values.steampipe.secretCredentials }}
+  {{- if or .Values.secretCredentials }}
   - name: steampipe-credentials-volume
     secret:
       secretName: {{ include "kdiff-snapshots.fullname" . }}-credentials
       optional: true
       items:
-      {{- range $config := .Values.steampipe.secretCredentials }}
+      {{- range $config := .Values.secretCredentials }}
       - key: {{ $config.name }}
         path: {{ $config.filename }}  # same as subPath
       {{- end }}
   {{- end }}
-  {{- if or .Values.steampipe.initDbSqlScripts }}
+  {{- if or .Values.initDbSqlScripts }}
   - name: steampipe-initdb-volume
     configMap:
       name: {{ include "kdiff-snapshots.fullname" . }}-initdb-sql-files
       optional: true
       items:
-      {{- range $key, $value := .Values.steampipe.initDbSqlScripts }}
+      {{- range $key, $value := .Values.initDbSqlScripts }}
       - key: {{ $key }}
         path: {{ $key }}  # same as subPath
       {{- end }}
@@ -70,7 +70,7 @@ volumes: []
 Expand the name of the chart.
 */}}
 {{- define "kdiff-snapshots.name" -}}
-{{- .Values.steampipe.nameOverride | default .Chart.Name }}
+{{- .Values.nameOverride | default .Chart.Name }}
 {{- end }}
 
 {{/*
@@ -79,10 +79,10 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "kdiff-snapshots.fullname" -}}
-{{- if .Values.steampipe.fullnameOverride }}
-{{- .Values.steampipe.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default .Chart.Name .Values.steampipe.nameOverride }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
 {{- if contains $name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -122,9 +122,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "kdiff-snapshots.serviceAccountName" -}}
-{{- if ((.Values.steampipe).serviceAccount).create }}
-{{- default (include "kdiff-snapshots.fullname" .) .Values.steampipe.serviceAccount.name }}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "kdiff-snapshots.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
-{{- ((.Values.steampipe).serviceAccount).name | default "default" }}
+{{- .Values.serviceAccount.name | default "default" }}
 {{- end }}
 {{- end }}
