@@ -6,6 +6,10 @@ global:
   # and powerpipe DB Connection URL will get this value from here 
   steampipeDatabasePassword: "Kj8mP2vN9xQ7tR5wL3cY1hB4nM6sD0pF"
 
+# CronJob configuration
+# https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+timeZone: 'Asia/Istanbul'  # optional -- https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+schedule: "00 20 * * *"    # https://crontab.guru/#00_20_*_*_*
 
 steampipe:
   # Additional Secret Env Vars for steampipe
@@ -25,7 +29,6 @@ steampipe:
     # set the default aws profile if you are passing aws credentials, or use .spc files
     # AWS_PROFILE: "default" 
 
-
   # secretCredentials will create Secret and
   # will put the file content to  '~/{directory}/{filename}'
   # useful for passing aws, gcp, kubeconfig credentials
@@ -35,7 +38,6 @@ steampipe:
     #   filename: "config"
     #   content: |
     #     example kubeconfig
-
 
   # .config is used to create a ConfigMap
   # and will be mounted to ~/.steampipe/config/{key} — the filename being the key  
@@ -51,8 +53,8 @@ steampipe:
 
   initDbSqlScripts: {}
 
-  replicaCount: 1
   containerPort: 9193
+
   image:
     repository: ghcr.io/oguzhan-yilmaz/kdiff-snapshots
     pullPolicy: Always
@@ -72,10 +74,6 @@ steampipe:
     runAsGroup: 11234
     runAsNonRoot: true
 
-  service:
-    type: ClusterIP
-    port: 9193
-
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
     # choice for the user. This also increases chances charts run on environments with little
@@ -93,3 +91,42 @@ steampipe:
   tolerations: []
 
   affinity: {}
+
+
+  serviceAccount:
+    create: true
+    annotations: {}
+    # If you want to use an existing service account, set create to false and specify the name
+    # create: false
+    # name: "existing-service-account"
+
+# Additional configuration for the cronjob
+secretEnvVars:
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  AWS_DEFAULT_REGION: "eu-west-1"
+  # AWS_ENDPOINT_URL_S3: 'https://s3.amazonaws.com'
+  S3_BUCKET_NAME: ""
+  S3_UPLOAD_PREFIX: "my-kdiff-snapshots/dev/"
+
+envVarSecretReferences: []
+#  - name: KDIFF_ADMIN_PASSWORD
+#  # remove the .secretEnvVars.KDIFF_ADMIN_PASSWORD if you use this
+#    valueFrom:
+#      secretKeyRef:
+#        name: kdiff-initial-admin-secret
+#        key: password
+
+custom_command: []
+#  - "/bin/bash"
+#  - "-c"
+#  - "echo 'Custom command executed'"
+
+extraObjects: []
+#  - apiVersion: v1
+#    kind: Secret
+#    metadata:
+#      name: extra-secret
+#    type: Opaque
+#    stringData:
+#      AAA: BBB

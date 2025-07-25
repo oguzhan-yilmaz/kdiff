@@ -1,0 +1,92 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "kdiff-snapshots.fullname" . }}
+  labels:
+    {{- include "kdiff-snapshots.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.timeZone }}
+  timeZone: {{ .Values.timeZone }}
+  {{- end }}
+  schedule: {{ .Values.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 2
+  startingDeadlineSeconds: 90
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          {{- with .Values.steampipe.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "kdiff-snapshots.selectorLabels" . | nindent 12 }}
+        spec:
+          {{- with .Values.steampipe.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          automountServiceAccountToken: true
+          serviceAccountName: {{ include "kdiff-snapshots.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.steampipe.podSecurityContext | nindent 12 }}
+          containers:
+            - name: {{ include "kdiff-snapshots.fullname" . }}
+              envFrom:
+              - configMapRef:
+                  name: {{ include "kdiff-snapshots.fullname" . }}-cm-env-vars
+              - secretRef:
+                  name: {{ include "kdiff-snapshots.fullname" . }}-credentials
+              {{- if .Values.secretEnvVars }}
+              - secretRef:
+                  name: {{ include "kdiff-snapshots.fullname" . }}-secret-env-vars
+              {{- end }}
+              {{- if .Values.envVarSecretReferences }}
+              env:
+                {{- toYaml .Values.envVarSecretReferences | nindent 16 }}
+              {{- end }}
+              securityContext:
+                {{- toYaml .Values.steampipe.securityContext | nindent 16 }}
+              image: "{{ .Values.steampipe.image.repository }}:{{ .Values.steampipe.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.steampipe.image.pullPolicy }}
+              {{- if .Values.debug }}
+              command: ["sleep", "infinity"]
+              {{- else if .Values.custom_command }}
+              command: 
+                {{- toYaml .Values.custom_command | nindent 16 }}
+              {{- end }}
+              ports:
+                - name: postgres
+                  containerPort: {{ .Values.steampipe.containerPort }}
+                  protocol: TCP
+              livenessProbe:
+                exec:
+                  command:
+                  - bash
+                  - ./healthcheck.sh
+                initialDelaySeconds: 60
+                periodSeconds: 10
+                failureThreshold: 6
+              {{- if .Values.steampipe.resources }}
+              resources:
+                {{- toYaml .Values.steampipe.resources | nindent 16 }}
+              {{- else }}
+              resources: {}
+              {{- end }}
+              {{- include "kdiff-snapshots.containerVolumeMounts" . | indent 14}}
+          {{- include "kdiff-snapshots.containerVolumes" . | indent 10}}
+          {{- with .Values.steampipe.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.steampipe.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.steampipe.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: OnFailure
