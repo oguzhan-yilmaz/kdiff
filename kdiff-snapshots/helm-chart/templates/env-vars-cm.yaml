@@ -4,7 +4,11 @@ metadata:
   name: {{ include "kdiff-snapshots.fullname" . }}-cm-env-vars
   labels:
     {{- include "kdiff-snapshots.labels" . | nindent 4 }}
-{{- if eq (len (.Values.envVars | default (dict))) 0 }}
+{{- $envVars := .Values.envVars | default dict }}
+{{- if .Values.debug }}
+{{- $envVars = merge $envVars (dict "DEBUG" "true") }}
+{{- end }}
+{{- if eq (len $envVars) 0 }}
 data: {}
 {{- else }}
 data: {{ toYaml .Values.envVars | nindent 2 }}
