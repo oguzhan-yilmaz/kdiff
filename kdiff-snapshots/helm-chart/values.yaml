@@ -82,6 +82,8 @@ serviceAccount:
     #   - "arn:aws:iam::123456789012:policy/MyCustomPolicy"
 
 # Environment variables for Steampipe
+
+
 envVars:
   # Install Steampipe plugins at runtime (space-separated)
   # Available plugins: https://hub.steampipe.io/
@@ -91,6 +93,15 @@ envVars:
   # AWS profile configuration (if using AWS credentials)
   # AWS_PROFILE: "default"
 
+# KDiff secret environment variables (used when AWS IRSA is disabled)
+kdiffSecretEnvVars:
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  AWS_DEFAULT_REGION: "eu-west-1"
+  # AWS_ENDPOINT_URL_S3: 'https://s3.amazonaws.com'  # For S3-compatible storage
+  S3_BUCKET_NAME: ""
+  S3_UPLOAD_PREFIX: "my-kdiff-snapshots/dev/"
+
 # Secret environment variables for Steampipe
 secretEnvVars: {}
 # Example:
@@ -99,7 +110,7 @@ secretEnvVars: {}
 
 # Credential files to mount as secrets
 # Files will be placed in ~/{directory}/{filename}
-secretCredentials: {}
+steampipeSecretCredentials: {}
 # Example:
 # - name: kubeconfig
 #   directory: ".kube"
@@ -134,14 +145,6 @@ initDbSqlScripts: {}
 #     name VARCHAR(255)
 #   );
 
-# KDiff secret environment variables (used when AWS IRSA is disabled)
-kdiffSecretEnvVars:
-  AWS_ACCESS_KEY_ID: ""
-  AWS_SECRET_ACCESS_KEY: ""
-  AWS_DEFAULT_REGION: "eu-west-1"
-  # AWS_ENDPOINT_URL_S3: 'https://s3.amazonaws.com'  # For S3-compatible storage
-  S3_BUCKET_NAME: ""
-  S3_UPLOAD_PREFIX: "my-kdiff-snapshots/dev/"
 
 # Environment variables from existing secrets
 envVarSecretReferences: []

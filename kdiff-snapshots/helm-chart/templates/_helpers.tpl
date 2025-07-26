@@ -1,14 +1,14 @@
 {{/*
 */}}
 {{- define "kdiff-snapshots.containerVolumeMounts" -}}
-{{- if or (or .Values.config .Values.secretCredentials) .Values.initDbSqlScripts }}
+{{- if or (or .Values.config .Values.steampipeSecretCredentials) .Values.initDbSqlScripts }}
 volumeMounts:
   {{- range $key, $value := .Values.config }}
   - name: steampipe-config-volume
     mountPath: /home/steampipe/.steampipe/config/{{ $key }}
     subPath: {{ $key }}
   {{- end }}
-  {{- range $config := .Values.secretCredentials }}
+  {{- range $config := .Values.steampipeSecretCredentials }}
   - name: steampipe-credentials-volume
     mountPath: /home/steampipe/{{ $config.directory }}/{{ $config.filename }}
     subPath: {{ $config.filename }}
@@ -25,7 +25,7 @@ volumeMounts: []
 
 
 {{- define "kdiff-snapshots.containerVolumes" -}}
-{{- if or (or .Values.config .Values.secretCredentials) .Values.initDbSqlScripts }}
+{{- if or (or .Values.config .Values.steampipeSecretCredentials) .Values.initDbSqlScripts }}
 volumes:
   {{- if or .Values.config }}
   - name: steampipe-config-volume
@@ -38,13 +38,13 @@ volumes:
         path: {{ $key }}  # same as subPath
       {{- end }}
   {{- end }}
-  {{- if or .Values.secretCredentials }}
+  {{- if or .Values.steampipeSecretCredentials }}
   - name: steampipe-credentials-volume
     secret:
       secretName: {{ include "kdiff-snapshots.fullname" . }}-credentials
       optional: true
       items:
-      {{- range $config := .Values.secretCredentials }}
+      {{- range $config := .Values.steampipeSecretCredentials }}
       - key: {{ $config.name }}
         path: {{ $config.filename }}  # same as subPath
       {{- end }}
