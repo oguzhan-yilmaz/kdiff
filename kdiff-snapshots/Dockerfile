@@ -2,7 +2,7 @@ FROM amazon/aws-cli:latest AS awscli
 
 FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:latest
 
-SHELL ["/bin/bash", "-c"]
+# SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && apt-get install -y inotify-tools && apt-get clean && rm -rf /var/lib/apt/lists/*
 
