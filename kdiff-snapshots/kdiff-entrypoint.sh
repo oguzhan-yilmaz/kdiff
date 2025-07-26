@@ -64,7 +64,10 @@ tar -czf "/tmp/$DIR_TAR_NAME" "/tmp/$DIR_NAME"
 
 
 if [ "$DEBUG" = "true" ]; then
+    echo "Checking AWS credentials..."
     aws sts get-caller-identity
+    echo "Listing contents of S3 bucket ${S3_BUCKET_NAME}..."
+    aws s3 ls s3://${S3_BUCKET_NAME}
 fi
 
 # ----------- S3 UPLOAD -----------
