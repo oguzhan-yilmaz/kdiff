@@ -22,7 +22,7 @@ spec:
   # Destination cluster and namespace to deploy the application
   destination:
     name: in-cluster
-    namespace: default
+    namespace: kdiff
 
   # Extra information to show in the Argo CD Application details tab
   info:
