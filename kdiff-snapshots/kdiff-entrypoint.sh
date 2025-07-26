@@ -2,7 +2,6 @@
 
 DEBUG=${DEBUG:-false}
 
-
 # ------ INITIAL CHECKS -----------
 
 if [ -z "$S3_BUCKET_NAME" ]; then
@@ -14,8 +13,6 @@ if [ -z "$S3_UPLOAD_PREFIX" ]; then
     echo "Error: S3_UPLOAD_PREFIX environment variable is not set. Aborting."
     exit 1
 fi
-
-
 
 # ----------- INSTALL PLUGINS -----------
 
@@ -44,11 +41,12 @@ fi
 # ----------- START STEAMPIPE -----------
 
 echo "Starting Steampipe:"
-steampipe service start --foreground
+steampipe service start
+# Wait a moment for steampipe to start
+sleep 5
 
 echo "Steampipe Service Status:"
 steampipe service status
-
 echo "------------*------------*------------"
 
 # ----------- BACKUP KUBERNETES STATE -----------
@@ -58,18 +56,21 @@ export DIR_NAME="kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
 export DIR_TAR_NAME="$DIR_NAME.tar.gz"
 
 echo "Running csv-script.sh to export Kubernetes resources to CSV files in /tmp/$DIR_NAME..."
-bash csv-script.sh --debug --out-dir "/tmp/$DIR_NAME"
-
+if ! bash csv-script.sh --debug --out-dir "/tmp/$DIR_NAME"; then
+    echo "Error: csv-script.sh failed. Aborting."
+    exit 1
+fi
 
 ls -al "/tmp/$DIR_NAME"
 
 # tar the snapshot
-tar -czf "/tmp/$DIR_TAR_NAME" "/tmp/$DIR_NAME"
-
-
+echo "Creating tar archive..."
+if ! tar -czf "/tmp/$DIR_TAR_NAME" -C "/tmp" "$DIR_NAME"; then
+    echo "Error: Failed to create $DIR_TAR_NAME tar archive. Aborting."
+    exit 1
+fi
 
 # upload the snapshot to s3
-
 
 if [ "$DEBUG" = "true" ]; then
     echo "Checking AWS credentials..."
@@ -80,15 +81,25 @@ fi
 
 # ----------- S3 UPLOAD -----------
 echo "Uploading to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}"
-aws s3 cp "/tmp/$DIR_TAR_NAME" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}
+if ! aws s3 cp "/tmp/$DIR_TAR_NAME" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}; then
+    echo "Error: Failed to upload $DIR_TAR_NAME to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}. Aborting."
+    exit 1
+fi
+
 echo "------------*------------*------------"
 
-echo "Listing  s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}"
+echo "Listing s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}"
 echo "---"
 aws s3 ls s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}
 
 echo "Download with command:"
 echo "    aws s3 cp s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME} ."
+
+# Cleanup temporary files
+echo "Cleaning up temporary files..."
+rm -rf "/tmp/$DIR_NAME"
+rm -f "/tmp/$DIR_TAR_NAME"
+
 
 
 if [ "$DEBUG" = "true" ]; then
