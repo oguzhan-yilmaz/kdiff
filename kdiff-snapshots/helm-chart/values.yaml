@@ -87,80 +87,79 @@ serviceAccount:
 envVars:
   # Install Steampipe plugins at runtime (space-separated)
   # Available plugins: https://hub.steampipe.io/
-  INSTALL_PLUGINS: >
+  INSTALL_STEAMPIPE_PLUGINS: >
     kubernetes
   
   # AWS profile configuration (if using AWS credentials)
   # AWS_PROFILE: "default"
 
-# KDiff secret environment variables (used when AWS IRSA is disabled)
-kdiffSecretEnvVars:
+# Secret environment variables
+secretEnvVars: 
   AWS_ACCESS_KEY_ID: ""
   AWS_SECRET_ACCESS_KEY: ""
   AWS_DEFAULT_REGION: "eu-west-1"
-  # AWS_ENDPOINT_URL_S3: 'https://s3.amazonaws.com'  # For S3-compatible storage
+  # Change endpoint AWS_ENDPOINT_URL_S3 with S3-compatible storage
+  AWS_ENDPOINT_URL_S3: 'https://s3.amazonaws.com'
   S3_BUCKET_NAME: ""
   S3_UPLOAD_PREFIX: "my-kdiff-snapshots/dev/"
 
-# Secret environment variables for Steampipe
-secretEnvVars: {}
-# Example:
-# AWS_ACCESS_KEY_ID: "your-access-key"
-# AWS_SECRET_ACCESS_KEY: "your-secret-key"
 
-# Credential files to mount as secrets
+
+# Steampipe credential files to mount as secrets
 # Files will be placed in ~/{directory}/{filename}
 steampipeSecretCredentials: {}
-# Example:
-# - name: kubeconfig
-#   directory: ".kube"
-#   filename: "config"
-#   content: |
-#     apiVersion: v1
-#     kind: Config
-#     clusters:
-#     - name: my-cluster
-#       cluster:
-#         server: https://kubernetes.default.svc
+# steampipeSecretCredentials:
+#   - name: kubeconfig
+#     directory: ".kube"
+#     filename: "config"
+#     content: |
+#       apiVersion: v1
+#       kind: Config
+#       clusters:
+#       - name: my-cluster
+#         cluster:
+#           server: https://kubernetes.default.svc
+
 
 # Steampipe configuration files
 # Files will be mounted to ~/.steampipe/config/{key}
 # Documentation: https://steampipe.io/docs/reference/config-files/overview
 steampipeConfig: {}
-# Example:
-# kubernetes.spc: |
-#   connection "kubernetes" {
-#     plugin         = "kubernetes"
-#     config_path    = "~/.kube/config"
-#     config_context = "myCluster"
-#     source_types   = ["deployed"]
-#   }
+# steampipeConfig:
+#   kubernetes.spc: |
+#     connection "kubernetes" {
+#       plugin         = "kubernetes"
+#       config_path    = "~/.kube/config"
+#       config_context = "myCluster"
+#       source_types   = ["deployed"]
+#     }
 
 # SQL scripts to run during database initialization
 initDbSqlScripts: {}
-# Example:
-# init.sql: |
-#   CREATE TABLE IF NOT EXISTS custom_table (
-#     id SERIAL PRIMARY KEY,
-#     name VARCHAR(255)
-#   );
+# initDbSqlScripts:
+#   init.sql: |
+#     CREATE TABLE IF NOT EXISTS custom_table (
+#       id SERIAL PRIMARY KEY,
+#       name VARCHAR(255)
+#     );
 
 
 # Environment variables from existing secrets
 envVarSecretReferences: []
-# Example:
-# - name: KDIFF_ADMIN_PASSWORD
-#   valueFrom:
-#     secretKeyRef:
-#       name: kdiff-initial-admin-secret
-#       key: password
+# envVarSecretReferences:
+#   - name: KDIFF_ADMIN_PASSWORD
+#     valueFrom:
+#       secretKeyRef:
+#         name: kdiff-initial-admin-secret
+#         key: password
+
 
 # Custom command to run instead of default entrypoint
 customCommand: []
-# Example:
-# - "/bin/bash"
-# - "-c"
-# - "echo 'Custom command executed'"
+# customCommand:
+#   - "/bin/bash"
+#   - "-c"
+#   - "echo 'Custom command executed'"
 
 # Additional Kubernetes objects to create
 extraObjects: []
