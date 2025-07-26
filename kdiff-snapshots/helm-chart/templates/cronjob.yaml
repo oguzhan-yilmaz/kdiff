@@ -8,7 +8,7 @@ spec:
   {{- if .Values.timeZone }}
   timeZone: {{ .Values.timeZone }}
   {{- end }}
-  schedule: {{ .Values.schedule | quote }}
+  schedule: {{ .Values.schedule | required ".schedule is required" | quote }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 5
   failedJobsHistoryLimit: 2
@@ -30,8 +30,10 @@ spec:
           {{- end }}
           automountServiceAccountToken: true
           serviceAccountName: {{ include "kdiff-snapshots.serviceAccountName" . }}
+          {{- with .Values.podSecurityContext }}
           securityContext:
-            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           containers:
             - name: {{ include "kdiff-snapshots.fullname" . }}
               envFrom:
@@ -39,34 +41,20 @@ spec:
                   name: {{ include "kdiff-snapshots.fullname" . }}-cm-env-vars
               - secretRef:
                   name: {{ include "kdiff-snapshots.fullname" . }}-steampipe-creds
-              {{- if and .Values.kdiffSecretEnvVars (not .Values.serviceAccount.awsIrsa.enabled) }}
+              {{- if .Values.secretEnvVars }}
               - secretRef:
                   name: {{ include "kdiff-snapshots.fullname" . }}-secret-env-vars
               {{- end }}
-              {{- if .Values.envVarSecretReferences }}
-              env:
-                {{- toYaml .Values.envVarSecretReferences | nindent 16 }}
-              {{- end }}
-              {{- if .Values.serviceAccount.awsIrsa.enabled }}
+              {{- if or ((.Values.serviceAccount).awsIrsa).enabled .Values.envVarSecretReferences}}
               env:
                 {{- if .Values.envVarSecretReferences }}
                 {{- toYaml .Values.envVarSecretReferences | nindent 16 }}
                 {{- end }}
+                {{- if ((.Values.serviceAccount).awsIrsa).enabled }}
                 - name: AWS_DEFAULT_REGION
                   value: {{ .Values.serviceAccount.awsIrsa.region | quote }}
                 - name: AWS_ROLE_ARN
                   value: {{ .Values.serviceAccount.awsIrsa.roleArn | quote }}
-                {{- if .Values.kdiffSecretEnvVars.S3_BUCKET_NAME }}
-                - name: S3_BUCKET_NAME
-                  value: {{ .Values.kdiffSecretEnvVars.S3_BUCKET_NAME | quote }}
-                {{- end }}
-                {{- if .Values.kdiffSecretEnvVars.S3_UPLOAD_PREFIX }}
-                - name: S3_UPLOAD_PREFIX
-                  value: {{ .Values.kdiffSecretEnvVars.S3_UPLOAD_PREFIX | quote }}
-                {{- end }}
-                {{- if .Values.kdiffSecretEnvVars.AWS_ENDPOINT_URL_S3 }}
-                - name: AWS_ENDPOINT_URL_S3
-                  value: {{ .Values.kdiffSecretEnvVars.AWS_ENDPOINT_URL_S3 | quote }}
                 {{- end }}
               {{- end }}
               securityContext:
