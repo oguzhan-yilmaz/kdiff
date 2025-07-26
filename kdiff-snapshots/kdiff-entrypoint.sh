@@ -38,12 +38,7 @@ if [ -f "init-db.sh" ]; then
     (bash init-db.sh) &
 fi
 
-# ----------- START STEAMPIPE -----------
-
-echo "Starting Steampipe:"
-steampipe service start
-# Wait a moment for steampipe to start
-sleep 5
+# ----------- CHECK STEAMPIPE SERVICE -----------
 
 echo "Steampipe Service Status:"
 steampipe service status
