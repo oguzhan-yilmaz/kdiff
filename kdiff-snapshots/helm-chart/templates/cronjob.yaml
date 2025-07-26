@@ -38,7 +38,7 @@ spec:
               - configMapRef:
                   name: {{ include "kdiff-snapshots.fullname" . }}-cm-env-vars
               - secretRef:
-                  name: {{ include "kdiff-snapshots.fullname" . }}-credentials
+                  name: {{ include "kdiff-snapshots.fullname" . }}-steampipe-creds
               {{- if and .Values.kdiffSecretEnvVars (not .Values.serviceAccount.awsIrsa.enabled) }}
               - secretRef:
                   name: {{ include "kdiff-snapshots.fullname" . }}-secret-env-vars

@@ -41,7 +41,7 @@ volumes:
   {{- if or .Values.steampipeSecretCredentials }}
   - name: steampipe-credentials-volume
     secret:
-      secretName: {{ include "kdiff-snapshots.fullname" . }}-credentials
+      secretName: {{ include "kdiff-snapshots.fullname" . }}-steampipe-creds
       optional: true
       items:
       {{- range $config := .Values.steampipeSecretCredentials }}
