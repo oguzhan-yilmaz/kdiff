@@ -77,8 +77,10 @@ for table in $tables; do
     log_debug "Output file: $out_file"
     log_debug "SQL query: $sql_query"
     log_info "Processing table: $table -- $sql_query"
-    echo "$sql_query" \
-        | steampipe query --output csv > "$out_file"
+    if ! steampipe query --output csv "$sql_query" > "$out_file" 2>/dev/null; then
+        log_warning "Failed to query table $table, skipping..."
+        continue
+    fi
     log_debug "Completed processing table: $table"
 done
 

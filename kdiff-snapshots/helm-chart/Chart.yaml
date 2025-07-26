@@ -3,14 +3,12 @@ name: kdiff-snapshots
 description: Snapshot your Kubernetes state periodically and compare changes with kdiff CLI
 type: application
 version: 0.1.0
-appVersion: "0.0.29"
+appVersion: "0.0.30"
 keywords:
   - kdiff
   - snapshots
   - steampipe
   - kubernetes
-  - etcd-snapshots
-  - monitoring
 home: https://github.com/oguzhan-yilmaz/kdiff
 sources:
   - https://github.com/oguzhan-yilmaz/kdiff
