@@ -30,7 +30,7 @@ volumes:
   {{- if or .Values.steampipeConfig }}
   - name: steampipe-config-volume
     configMap:
-      name: {{ include "kdiff-snapshots.fullname" . }}-config
+      name: {{ include "kdiff-snapshots.fullname" . }}-steampipe-config
       optional: true
       items:
       {{- range $key, $value := .Values.steampipeConfig }}
@@ -122,9 +122,5 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "kdiff-snapshots.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "kdiff-snapshots.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- .Values.serviceAccount.name | default "default" }}
-{{- end }}
+{{- default (include "kdiff-snapshots.fullname" .) (.Values.serviceAccount).name }}
 {{- end }}

@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "kdiff-snapshots.fullname" . }}-config
+  name: {{ include "kdiff-snapshots.fullname" . }}-steampipe-config
   labels:
     {{- include "kdiff-snapshots.labels" . | nindent 4 }}
 {{- if eq (len (.Values.steampipeConfig | default (dict))) 0 }}
