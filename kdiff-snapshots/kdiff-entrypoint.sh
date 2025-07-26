@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEBUG=${DEBUG:-true}
+DEBUG=${DEBUG:-false}
 
 
 # ------ INITIAL CHECKS -----------
@@ -33,23 +33,31 @@ steampipe plugin update --all
 echo "Steampipe Plugins:"
 steampipe plugin list
 
-# # ----------- INIT DB -----------
+# ----------- INIT DB -----------
 
-# # run the initdb.sh in a sub-shell to not block the steampipe service start
-# (bash init-db.sh) &
+# run the initdb.sh in a sub-shell to not block the steampipe service start
+if [ -f "init-db.sh" ]; then
+    echo "Running init-db.sh script..."
+    (bash init-db.sh) &
+fi
 
 # ----------- START STEAMPIPE -----------
 
 echo "Starting Steampipe:"
 steampipe service start --foreground
 
+echo "Steampipe Service Status:"
 steampipe service status
+
+echo "------------*------------*------------"
+
 # ----------- BACKUP KUBERNETES STATE -----------
 # snapshot kubernetes state
 
 export DIR_NAME="kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
 export DIR_TAR_NAME="$DIR_NAME.tar.gz"
 
+echo "Running csv-script.sh to export Kubernetes resources to CSV files in /tmp/$DIR_NAME..."
 bash csv-script.sh --debug --out-dir "/tmp/$DIR_NAME"
 
 
