@@ -123,7 +123,7 @@ Export Kubernetes data to CSV format for analysis in external tools.
 # values.yaml
 steampipe:
   envVars:
-    INSTALL_PLUGINS: "kubernetes aws gcp azure"
+    INSTALL_STEAMPIPE_PLUGINS: "kubernetes aws gcp azure"
     AWS_PROFILE: "production"
     GCP_PROJECT: "my-gcp-project"
   

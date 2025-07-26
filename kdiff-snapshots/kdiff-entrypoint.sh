@@ -19,9 +19,9 @@ fi
 
 # ----------- INSTALL PLUGINS -----------
 
-if [ -n "$INSTALL_PLUGINS" ]; then
-    echo "Installing Plugins: $INSTALL_PLUGINS"
-    for mod in $INSTALL_PLUGINS; do
+if [ -n "$INSTALL_STEAMPIPE_PLUGINS" ]; then
+    echo "Installing Plugins: $INSTALL_STEAMPIPE_PLUGINS"
+    for mod in $INSTALL_STEAMPIPE_PLUGINS; do
         echo "Installing Plugin: $mod"
         steampipe plugin install "$mod" > /dev/null
     done

@@ -122,5 +122,5 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "kdiff-snapshots.serviceAccountName" -}}
-{{- default (include "kdiff-snapshots.fullname" .) (.Values.serviceAccount).name }}
+{{- default (include "kdiff-snapshots.fullname" .)  }}
 {{- end }}
