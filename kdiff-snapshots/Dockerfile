@@ -2,6 +2,8 @@ FROM amazon/aws-cli:latest AS awscli
 
 FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:latest
 
+SHELL ["/bin/bash", "-c"]
+
 # get the aws cli from it's docker image
 COPY --from=awscli --chown=steampipe:steampipe /usr/local/aws-cli /usr/local/aws-cli
 USER root
