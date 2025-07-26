@@ -1,9 +1,9 @@
 {{/*
 */}}
 {{- define "kdiff-snapshots.containerVolumeMounts" -}}
-{{- if or (or .Values.config .Values.steampipeSecretCredentials) .Values.initDbSqlScripts }}
+{{- if or (or .Values.steampipeConfig .Values.steampipeSecretCredentials) .Values.initDbSqlScripts }}
 volumeMounts:
-  {{- range $key, $value := .Values.config }}
+  {{- range $key, $value := .Values.steampipeConfig }}
   - name: steampipe-config-volume
     mountPath: /home/steampipe/.steampipe/config/{{ $key }}
     subPath: {{ $key }}
@@ -25,15 +25,15 @@ volumeMounts: []
 
 
 {{- define "kdiff-snapshots.containerVolumes" -}}
-{{- if or (or .Values.config .Values.steampipeSecretCredentials) .Values.initDbSqlScripts }}
+{{- if or (or .Values.steampipeConfig .Values.steampipeSecretCredentials) .Values.initDbSqlScripts }}
 volumes:
-  {{- if or .Values.config }}
+  {{- if or .Values.steampipeConfig }}
   - name: steampipe-config-volume
     configMap:
       name: {{ include "kdiff-snapshots.fullname" . }}-config
       optional: true
       items:
-      {{- range $key, $value := .Values.config }}
+      {{- range $key, $value := .Values.steampipeConfig }}
       - key: {{ $key }}
         path: {{ $key }}  # same as subPath
       {{- end }}

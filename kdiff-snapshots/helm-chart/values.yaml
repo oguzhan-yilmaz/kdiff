@@ -126,7 +126,7 @@ steampipeSecretCredentials: {}
 # Steampipe configuration files
 # Files will be mounted to ~/.steampipe/config/{key}
 # Documentation: https://steampipe.io/docs/reference/config-files/overview
-config: {}
+steampipeConfig: {}
 # Example:
 # kubernetes.spc: |
 #   connection "kubernetes" {
