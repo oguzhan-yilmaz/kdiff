@@ -132,7 +132,7 @@ metadata_file="${OUT_DIR}/.metadata.json"
 
 # Create metadata file with CLI versions, cluster info, and snapshot details
 
-cat << EOF 
+cat << EOF | tee "$metadata_file"
 {
   "cliVersions": {
     "kubectl": $(kubectl version --client -o json 2>/dev/null | jq '.clientVersion.gitVersion' || echo '""'),
@@ -153,8 +153,6 @@ cat << EOF
 EOF
 
 echo "Created metadata file: $metadata_file"
-
-
 
 
     

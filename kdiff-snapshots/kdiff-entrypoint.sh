@@ -73,20 +73,20 @@ bash start-and-wait-steampipe-service.sh
 # ----------- BACKUP KUBERNETES STATE -----------
 # snapshot kubernetes state
 
-export DIR_NAME="kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
+export DIR_NAME="data/kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
 export DIR_TAR_NAME="$DIR_NAME.tar.gz"
 
-echo "Running csv-script.sh to export Kubernetes resources to CSV files in /tmp/$DIR_NAME..."
-if ! bash csv-script.sh --out-dir "/tmp/$DIR_NAME" $([ "$DEBUG" = "true" ] && echo "--debug"); then
+echo "Running csv-script.sh to export Kubernetes resources to CSV files in $DIR_NAME..."
+if ! bash csv-script.sh --out-dir "$DIR_NAME" $([ "$DEBUG" = "true" ] && echo "--debug"); then
     echo "Error: csv-script.sh failed. Aborting."
     exit 1
 fi
 
-ls -al "/tmp/$DIR_NAME"
-
+ls -al "$DIR_NAME"
+mkdir -p tars/
 # tar the snapshot
 echo "Creating tar archive..."
-if ! tar -czf "/tmp/$DIR_TAR_NAME" -C "/tmp" "$DIR_NAME"; then
+if ! tar -czf "$DIR_TAR_NAME" -C "tars/" "$DIR_NAME"; then
     echo "Error: Failed to create $DIR_TAR_NAME tar archive. Aborting."
     exit 1
 fi
