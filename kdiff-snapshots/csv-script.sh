@@ -4,6 +4,9 @@
 OUT_DIR="k8s-data-csv-$(date +%Y-%m-%d-%H%M)"
 DEBUG=false
 
+# SQL_LIMIT_STR is expected to be a string like "LIMIT 1000"
+SQL_LIMIT_STR=${SQL_LIMIT_STR:-""}
+
 # ======= Command Line Arguments =======
 # Add current directory to PATH
 export PATH="$PATH:$(pwd)"
@@ -46,7 +49,7 @@ log_error() {
     echo "[ERROR] $1"
 }
 
-log_debug "Script started with arguments: OUT_DIR=$OUT_DIR, DEBUG=$DEBUG"
+log_debug "Script started with arguments: OUT_DIR=$OUT_DIR, DEBUG=$DEBUG, SQL_LIMIT_STR=$SQL_LIMIT_STR"
 
 # Create output directory if it doesn't exist
 log_debug "Creating output directory: $OUT_DIR"
@@ -64,9 +67,8 @@ log_info "$cluster_info"
 
 # ======= Query Tables =======
 
-# LIMIT_STR="LIMIT 3"
-log_debug "Querying kubernetes tables with limit: $LIMIT_STR"
-tables=$(steampipe query --header=false --output=csv "SELECT table_name FROM information_schema.tables WHERE table_schema = 'kubernetes' $LIMIT_STR")
+log_debug "Querying kubernetes tables with limit: $SQL_LIMIT_STR"
+tables=$(steampipe query --header=false --output=csv "SELECT table_name FROM information_schema.tables WHERE table_schema = 'kubernetes' $SQL_LIMIT_STR")
 log_debug "Found tables: $tables"
 
 # Process each table
@@ -90,7 +92,7 @@ log_debug "Script completed successfully"
 
 
 # CRD_LIMIT_STR="LIMIT 5"
-crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $CRD_LIMIT_STR;"
+crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
 crd_names=$(steampipe query --header=false --output=csv "$crd_sql")
 CRD_OUT_DIR="$OUT_DIR/crds"
 

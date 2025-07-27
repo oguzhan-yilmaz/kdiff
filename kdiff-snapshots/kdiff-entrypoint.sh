@@ -2,6 +2,9 @@
 
 DEBUG=${DEBUG:-false}
 
+# SQL_LIMIT_STR is expected to be a string like "LIMIT 1000"
+SQL_LIMIT_STR=${SQL_LIMIT_STR:-""}
+
 # ------ INITIAL CHECKS -----------
 
 if [ -z "$S3_BUCKET_NAME" ]; then
@@ -51,7 +54,7 @@ export DIR_NAME="kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
 export DIR_TAR_NAME="$DIR_NAME.tar.gz"
 
 echo "Running csv-script.sh to export Kubernetes resources to CSV files in /tmp/$DIR_NAME..."
-if ! bash csv-script.sh --debug --out-dir "/tmp/$DIR_NAME"; then
+if ! bash csv-script.sh --debug "$DEBUG" --out-dir "/tmp/$DIR_NAME" --sql-limit-str "$SQL_LIMIT_STR"; then
     echo "Error: csv-script.sh failed. Aborting."
     exit 1
 fi
