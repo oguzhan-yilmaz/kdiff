@@ -41,16 +41,9 @@ if [ -f "init-db.sh" ]; then
     (bash init-db.sh) &
 fi
 
-# ----------- CHECK STEAMPIPE SERVICE -----------
+# ----------- START STEAMPIPE SERVICE -----------
 
-echo "Starting Steampipe Service..."
-steampipe service start
-
-sleep 4
-
-echo "Steampipe Service Status:"
-steampipe service status
-echo "------------*------------*------------"
+bash start-and-wait-steampipe-service.sh
 
 # ----------- BACKUP KUBERNETES STATE -----------
 # snapshot kubernetes state
