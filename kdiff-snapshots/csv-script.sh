@@ -68,7 +68,9 @@ log_info "$cluster_info"
 # ======= Query Tables =======
 
 log_debug "Querying kubernetes tables with limit: $SQL_LIMIT_STR"
-tables=$(steampipe query --header=false --output=csv "SELECT table_name FROM information_schema.tables WHERE table_schema = 'kubernetes' $SQL_LIMIT_STR")
+tables_sql="SELECT table_name FROM information_schema.tables WHERE table_schema = 'kubernetes' $SQL_LIMIT_STR"
+log_debug "Tables SQL query: $tables_sql"
+tables=$(steampipe query --header=false --output=csv "$tables_sql")
 log_debug "Found tables: $tables"
 
 # Process each table
@@ -79,14 +81,20 @@ for table in $tables; do
     log_debug "Output file: $out_file"
     log_debug "SQL query: $sql_query"
     log_info "Processing table: $table -- $sql_query"
+
+    if [ -z "$sql_query" ]; then
+        log_warning "Empty SQL query for table $table, skipping..."
+        continue
+    fi
+
     if ! steampipe query --output csv "$sql_query" > "$out_file" 2>/dev/null; then
         log_warning "Failed to query table $table, skipping..."
         continue
     fi
-    log_debug "Completed processing table: $table"
+    log_debug ">> Completed processing table: $table"
 done
 
-log_debug "Script completed successfully"
+log_debug ">> Script completed successfully"
 
 
 
