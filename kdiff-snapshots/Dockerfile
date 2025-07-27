@@ -7,6 +7,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 USER root
 RUN apt-get update -y \
+    && apt-get install -y wget gpg \
+    && wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | gpg --dearmor -o /usr/share/keyrings/qsv-deb.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/qsv-deb.gpg] https://dathere.github.io/qsv-deb-releases ./" | tee /etc/apt/sources.list.d/qsv.list \
+    && apt-get update -y \
     && apt-get install -y \
         inotify-tools \
         curl \
