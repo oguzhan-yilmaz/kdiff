@@ -52,7 +52,7 @@ export DIR_NAME="kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
 export DIR_TAR_NAME="$DIR_NAME.tar.gz"
 
 echo "Running csv-script.sh to export Kubernetes resources to CSV files in /tmp/$DIR_NAME..."
-if ! bash csv-script.sh --out-dir "/tmp/$DIR_NAME" --sql-limit-str "$SQL_LIMIT_STR" $([ "$DEBUG" = "true" ] && echo "--debug"); then
+if ! bash csv-script.sh --out-dir "/tmp/$DIR_NAME" $([ "$DEBUG" = "true" ] && echo "--debug"); then
     echo "Error: csv-script.sh failed. Aborting."
     exit 1
 fi
