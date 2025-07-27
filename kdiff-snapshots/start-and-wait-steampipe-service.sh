@@ -6,7 +6,7 @@ steampipe service start
 # Wait for healthcheck to succeed
 WAIT_TIME=0
 while true; do
-    if ./healthcheck.sh; then
+    if bash healthcheck.sh; then
         echo "Steampipe service is healthy after waiting ${WAIT_TIME} seconds"
         break
     fi
