@@ -6,7 +6,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # SHELL ["/bin/bash", "-c"]
 
 USER root
-RUN apt-get update -y && apt-get install -y inotify-tools curl git unzip qsv && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y \
+    && apt-get install -y \
+        inotify-tools \
+        curl \
+        git \
+        unzip \
+        qsv \
+        jq \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # get the aws cli from it's docker image
 COPY --from=awscli --chown=steampipe:steampipe /usr/local/aws-cli /usr/local/aws-cli
