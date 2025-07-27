@@ -119,6 +119,40 @@ done
 )
 
 
+
+# ------- Create .metadata.json file -------
+# Create .metadata.json file in the OUT_DIR with metadata about the snapshot
+metadata_file="${OUT_DIR}/.metadata.json"
+
+# Create metadata file with CLI versions, cluster info, and snapshot details
+
+cat << EOF 
+{
+  "cliVersions": {
+    "kubectl": $(kubectl version --client -o json 2>/dev/null | jq '.clientVersion.gitVersion' || echo '""'),
+    "aws": "$(aws --version 2>&1)",
+    "qsv": "$(qsv --version 2>&1)", 
+    "jq": "$(jq --version 2>&1)",
+    "steampipe": "$(steampipe --version 2>&1)"
+  },
+  "snapshotInfo": {
+    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "hostname": "${HOSTNAME:-}",
+    "sql_limit_str": "${SQL_LIMIT_STR:-}",
+    "s3_bucket_name": "${S3_BUCKET_NAME:-}",
+    "s3_upload_prefix": "${S3_UPLOAD_PREFIX:-}",
+    "aws_endpoint_url_s3": "${AWS_ENDPOINT_URL_S3:-}"
+  }
+}
+EOF
+
+echo "Created metadata file: $metadata_file"
+
+
+
+
+    
+
 log_debug "Script completed successfully"
 
 
