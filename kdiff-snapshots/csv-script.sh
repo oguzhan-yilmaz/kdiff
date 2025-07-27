@@ -103,15 +103,13 @@ log_debug ">> Script completed successfully"
 crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
 crd_names=$(steampipe query --header=false --output=csv "$crd_sql")
 CRD_OUT_DIR="$OUT_DIR/crds"
-
+mkdir -p "$CRD_OUT_DIR"
 
 log_debug "Found crd_names: $crd_names"
 for crd_name in $crd_names; do
     # Replace dots and dashes with underscores in CRD name
-
-    log_info "Processing CRD: $crd_name -- $crd_sql_query"
-    mkdir -p "$CRD_OUT_DIR"
     crd_sql_query="SELECT * FROM $crd_name"
+    log_info "Processing CRD: $crd_name -- $crd_sql_query"
     # log_debug "Processing CRD: $crd_name -- $crd_sql_query"
     echo "$crd_sql_query" \
         | steampipe query --output csv > "$CRD_OUT_DIR/${crd_name}.csv"

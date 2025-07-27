@@ -17,6 +17,31 @@ if [ -z "$S3_UPLOAD_PREFIX" ]; then
     exit 1
 fi
 
+# Check if AWS_DEFAULT_REGION is not set, try to detect from bucket
+if [ -z "$AWS_DEFAULT_REGION" ]; then
+    echo "AWS_DEFAULT_REGION not set, attempting to detect from bucket location..."
+    
+    # Get bucket location using AWS CLI
+    BUCKET_LOCATION=$(aws s3api get-bucket-location --bucket "$S3_BUCKET_NAME" 2>/dev/null)
+    
+    if [ $? -eq 0 ]; then
+        # Parse the JSON response
+        REGION=$(echo "$BUCKET_LOCATION" | jq -r '.LocationConstraint // "us-east-1"')
+        
+        # Special case: null means us-east-1
+        if [ "$REGION" = "null" ]; then
+            REGION="us-east-1"
+        fi
+        
+        export AWS_DEFAULT_REGION="$REGION"
+        echo "Detected bucket region: $AWS_DEFAULT_REGION"
+    else
+        echo "Warning: Could not detect bucket region. AWS credentials may be invalid or bucket may not exist."
+        echo "Please set AWS_DEFAULT_REGION manually if needed."
+    fi
+fi
+
+
 # ----------- INSTALL PLUGINS -----------
 
 if [ -n "$INSTALL_STEAMPIPE_PLUGINS" ]; then
