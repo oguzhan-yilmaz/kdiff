@@ -26,14 +26,14 @@ if [ -z "$AWS_DEFAULT_REGION" ]; then
     
     if [ $? -eq 0 ]; then
         # Parse the JSON response
-        REGION=$(echo "$BUCKET_LOCATION" | jq -r '.LocationConstraint // "us-east-1"')
+        AWS_REGION=$(echo "$BUCKET_LOCATION" | jq -r '.LocationConstraint // "us-east-1"')
         
         # Special case: null means us-east-1
-        if [ "$REGION" = "null" ]; then
-            REGION="us-east-1"
+        if [ "$AWS_REGION" = "null" ]; then
+            AWS_REGION="us-east-1"
         fi
         
-        export AWS_DEFAULT_REGION="$REGION"
+        export AWS_DEFAULT_REGION="$AWS_REGION"
         echo "Detected bucket region: $AWS_DEFAULT_REGION"
     else
         echo "Warning: Could not detect bucket region. AWS credentials may be invalid or bucket may not exist."
