@@ -68,7 +68,7 @@ log_info "$cluster_info"
 # ======= Query Tables =======
 
 log_debug "Querying kubernetes tables with limit: $SQL_LIMIT_STR"
-tables_sql="SELECT table_name FROM information_schema.tables WHERE table_schema = 'kubernetes' $SQL_LIMIT_STR"
+tables_sql="SELECT table_name FROM information_schema.tables WHERE table_schema='kubernetes' $SQL_LIMIT_STR"
 log_debug "Tables SQL query: $tables_sql"
 tables=$(steampipe query --header=false --output=csv "$tables_sql")
 log_debug "Found tables: $tables"
