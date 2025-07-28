@@ -70,14 +70,31 @@ log_info "$cluster_info"
 log_debug "Querying kubernetes tables with limit: $SQL_LIMIT_STR"
 tables_sql="SELECT table_name FROM information_schema.tables WHERE table_schema='kubernetes' $SQL_LIMIT_STR"
 log_debug "Tables SQL query: $tables_sql"
-tables=$(steampipe query --header=false --output=csv "$tables_sql")
-log_debug "Found tables: $tables"
+# Add retries and delay to ensure steampipe service is ready
+k8s_tables_max_retries=5
+k8s_tables_retry_count=0
+while [ $k8s_tables_retry_count -lt $k8s_tables_max_retries ]; do
+    if tables=$(steampipe query --header=false --output=csv "$tables_sql" 2>/dev/null); then
+        break
+    fi
+    log_warning "Failed to query tables, retrying in 5 seconds... (Attempt $((k8s_tables_retry_count+1))/$k8s_tables_max_retries)"
+    sleep 5
+    k8s_tables_retry_count=$((k8s_tables_retry_count+1))
+done
+
+if [ $k8s_tables_retry_count -eq $k8s_tables_max_retries ]; then
+    log_error "Failed to query tables after $k8s_tables_max_retries attempts"
+    exit 1
+fi
 
 # Check if tables list is empty
 if [ -z "$tables" ]; then
     log_error "No tables found to process. Exiting..."
+    rm -rf "$OUT_DIR"
     exit 1
 fi
+
+log_debug "Found tables: $tables"
 
 
 # Process each table
