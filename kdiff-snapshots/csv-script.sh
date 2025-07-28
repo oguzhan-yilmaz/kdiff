@@ -73,6 +73,13 @@ log_debug "Tables SQL query: $tables_sql"
 tables=$(steampipe query --header=false --output=csv "$tables_sql")
 log_debug "Found tables: $tables"
 
+# Check if tables list is empty
+if [ -z "$tables" ]; then
+    log_error "No tables found to process. Exiting..."
+    exit 1
+fi
+
+
 # Process each table
 for table in $tables; do
     out_file="${OUT_DIR}/${table}.csv"
@@ -93,8 +100,6 @@ for table in $tables; do
     fi
     log_debug ">> Completed processing table: $table"
 done
-
-log_debug ">> Script completed successfully"
 
 
 
