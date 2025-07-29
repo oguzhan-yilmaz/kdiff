@@ -136,7 +136,7 @@ log_info "------------*------------*------------"
 # ======= BACKUP KUBERNETES STATE =======
 # snapshot kubernetes state
 export DIR_NAME="kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
-export DIR_TAR_NAME="$DIR_NAME.tar.gz"
+export DIR_TAR_NAME="$DIR_NAME.tar"
 
 log_info "Running csv-script.sh to export Kubernetes resources to CSV files in data/$DIR_NAME..."
 retry_with_backoff \
@@ -149,9 +149,9 @@ log_info "------------*------------*------------"
 mkdir -p tars/
 # tar the snapshot
 log_info "Creating tar archive..."
-log_debug "Running command: tar -czf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\""
+log_debug "Running command: tar -cf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\""
 retry_with_backoff \
-    "tar -czf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\"" \
+    "tar -cf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\"" \
     "Create tar archive"
 
 log_success "Successfully created tar archive at tars/$DIR_TAR_NAME"
