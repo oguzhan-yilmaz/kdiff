@@ -61,18 +61,10 @@ log_debug "Creating output directory: $OUT_DIR"
 mkdir -p "$OUT_DIR"
 
 log_info "Output directory: $OUT_DIR"
-# Get current context and cluster info
-log_info "Getting current Kubernetes context and cluster info"
-current_context=$(kubectl config current-context)
-log_info "Current context: $current_context"
-
-cluster_info=$(kubectl cluster-info)
-log_info "Cluster info:"
-log_info "$cluster_info"
 
 # ======= Query Tables =======
 
-log_debug "Querying kubernetes tables with limit: $SQL_LIMIT_STR"
+log_debug "Querying kubernetes tables with limit: ${SQL_LIMIT_STR:-N/A}"
 tables_sql="SELECT table_name FROM information_schema.tables WHERE table_schema='kubernetes' $SQL_LIMIT_STR"
 log_debug "Tables SQL query: $tables_sql"
 # Add retries and delay to ensure steampipe service is ready
@@ -99,18 +91,14 @@ if [ -z "$tables" ]; then
     exit 1
 fi
 
-log_debug "Found tables: $tables"
+log_debug "Found $(echo "$tables" | wc -l) tables"
 
 
 # Process each table
 for table in $tables; do
     out_file="${OUT_DIR}/${table}.csv"
     sql_query="SELECT * FROM kubernetes.$table"
-    log_debug "Processing table: $table"
-    log_debug "Output file: $out_file"
-    log_debug "SQL query: $sql_query"
-    log_info "Processing table: $table -- $sql_query"
-
+    log_debug "Processing table: $table  -- Output file: $out_file -- SQL query: $sql_query"
     if [ -z "$sql_query" ]; then
         log_warning "Empty SQL query for table $table, skipping..."
         continue
@@ -157,7 +145,7 @@ done
 
 # ------- Create .metadata.json file -------
 # Create .metadata.json file in the OUT_DIR with metadata about the snapshot
-metadata_file="${OUT_DIR}/.metadata.json"
+metadata_file="${OUT_DIR}/metadata.json"
 
 # Create metadata file with CLI versions, cluster info, and snapshot details
 
@@ -186,6 +174,6 @@ echo "Created metadata file: $metadata_file"
 
     
 
-log_debug "Script completed successfully"
+log_debug "csv-script.sh completed successfully"
 
 

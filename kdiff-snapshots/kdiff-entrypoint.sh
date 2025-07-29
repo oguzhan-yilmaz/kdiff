@@ -152,7 +152,7 @@ log_info "Creating tar archive..."
 log_debug "Running command: tar -cf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\""
 retry_with_backoff \
     "tar -cf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\"" \
-    "Create tar archive"
+    "Create tar archive $DIR_TAR_NAME"
 
 log_success "Successfully created tar archive at tars/$DIR_TAR_NAME"
 ls -alh "tars/$DIR_TAR_NAME"
@@ -198,4 +198,4 @@ if [ "$DEBUG" = "true" ]; then
     sleep infinity
 fi
 
-log_success "kdiff entrypoint completed successfully"
+log_success "kdiff-entrypoint.sh completed successfully"
