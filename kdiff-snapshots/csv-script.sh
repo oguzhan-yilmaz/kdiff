@@ -53,6 +53,8 @@ log_debug "Script started with arguments: OUT_DIR=$OUT_DIR, DEBUG=$DEBUG, SQL_LI
 # Default output directory with timestamp if not set
 OUT_DIR=${OUT_DIR:-"k8s-data-csv-$(date +%Y-%m-%d-%H%M)"}
 
+# Prepend data/ to OUT_DIR
+OUT_DIR="data/$OUT_DIR"
 
 # Create output directory if it doesn't exist
 log_debug "Creating output directory: $OUT_DIR"
