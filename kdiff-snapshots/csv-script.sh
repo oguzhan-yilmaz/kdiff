@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Default output directory with timestamp
-OUT_DIR="k8s-data-csv-$(date +%Y-%m-%d-%H%M)"
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 # SQL_LIMIT_STR is expected to be a string like "LIMIT 1000"
 SQL_LIMIT_STR=${SQL_LIMIT_STR:-""}
@@ -50,6 +49,10 @@ log_error() {
 }
 
 log_debug "Script started with arguments: OUT_DIR=$OUT_DIR, DEBUG=$DEBUG, SQL_LIMIT_STR=$SQL_LIMIT_STR"
+
+# Default output directory with timestamp if not set
+OUT_DIR=${OUT_DIR:-"k8s-data-csv-$(date +%Y-%m-%d-%H%M)"}
+
 
 # Create output directory if it doesn't exist
 log_debug "Creating output directory: $OUT_DIR"
@@ -133,8 +136,10 @@ for crd_name in $crd_names; do
     crd_sql_query="SELECT * FROM $crd_name"
     log_info "Processing CRD: $crd_name -- $crd_sql_query"
     # log_debug "Processing CRD: $crd_name -- $crd_sql_query"
-    echo "$crd_sql_query" \
-        | steampipe query --output csv > "$CRD_OUT_DIR/${crd_name}.csv"
+    if ! steampipe query --output csv "$crd_sql_query" > "$CRD_OUT_DIR/${crd_name}.csv" 2>/dev/null; then
+        log_warning "Failed to query CRD $crd_name, skipping..."
+        continue
+    fi
     log_debug "Completed processing CRD: $crd_name"
 done
 
