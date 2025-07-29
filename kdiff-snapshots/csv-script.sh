@@ -176,7 +176,7 @@ cat << EOF | tee "$metadata_file"
     "sql_limit_str": "${SQL_LIMIT_STR:-}",
     "s3_bucket_name": "${S3_BUCKET_NAME:-}",
     "s3_upload_prefix": "${S3_UPLOAD_PREFIX:-}",
-    "aws_endpoint_url_s3": "${AWS_ENDPOINT_URL_S3:-}"
+    "aws_endpoint_url_s3": "${AWS_ENDPOINT_URL_S3:-AWS S3}"
   }
 }
 EOF

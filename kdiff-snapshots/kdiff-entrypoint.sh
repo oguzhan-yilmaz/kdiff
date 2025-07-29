@@ -26,13 +26,7 @@ if [ -z "$AWS_DEFAULT_REGION" ]; then
     
     if [ $? -eq 0 ]; then
         # Parse the JSON response
-        AWS_REGION=$(echo "$BUCKET_LOCATION" | jq -r '.LocationConstraint // "us-east-1"')
-        
-        # Special case: null means us-east-1
-        if [ "$AWS_REGION" = "null" ]; then
-            AWS_REGION="us-east-1"
-        fi
-        
+        export AWS_REGION=$(echo "$BUCKET_LOCATION" | jq -r '.LocationConstraint // "us-east-1"')
         export AWS_DEFAULT_REGION="$AWS_REGION"
         echo "Detected bucket region: $AWS_DEFAULT_REGION"
     else
@@ -69,6 +63,7 @@ fi
 # ----------- START STEAMPIPE SERVICE -----------
 
 bash start-and-wait-steampipe-service.sh
+echo "------------*------------*------------"
 
 # ----------- BACKUP KUBERNETES STATE -----------
 # snapshot kubernetes state
@@ -81,34 +76,40 @@ if ! bash csv-script.sh --out-dir "$DIR_NAME" $([ "$DEBUG" = "true" ] && echo "-
     echo "Error: csv-script.sh failed. Aborting."
     exit 1
 fi
+ls -al "data/$DIR_NAME"
+echo "------------*------------*------------"
 
-ls -al "$DIR_NAME"
 mkdir -p tars/
 # tar the snapshot
 echo "Creating tar archive..."
-echo "Running command: tar -czf \"tars/$DIR_TAR_NAME\" -C \"data/$DIR_NAME\" ."
-if ! tar -czf "tars/$DIR_TAR_NAME" -C "data/$DIR_NAME" .; then
+echo "Running command: tar -czf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\""
+if ! tar -czf "tars/$DIR_TAR_NAME" -C "data" "$DIR_NAME"; then
     echo "Error: Failed to create $DIR_TAR_NAME tar archive. Aborting."
     echo "tar exit code: $?"
     exit 1
 fi
 echo "Successfully created tar archive at tars/$DIR_TAR_NAME"
+ls -alh "tars/$DIR_TAR_NAME"
 echo "Archive contents:"
 tar -tvf "tars/$DIR_TAR_NAME"
-
 # upload the snapshot to s3
+echo "------------*------------*------------"
 
 if [ "$DEBUG" = "true" ]; then
     echo "Checking AWS credentials..."
     aws sts get-caller-identity
     echo "Listing contents of S3 bucket ${S3_BUCKET_NAME}..."
-    aws s3 ls s3://${S3_BUCKET_NAME}
+    aws s3 ls s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}
+    echo "AWS Region configuration:"
+    echo "AWS_REGION=${AWS_REGION:-not set}"
+    echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-not set}"
+
 fi
 
 # ----------- S3 UPLOAD -----------
 echo "Uploading to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}"
-if ! aws s3 cp "/tmp/$DIR_TAR_NAME" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}; then
-    echo "Error: Failed to upload $DIR_TAR_NAME to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}. Aborting."
+if ! aws s3 cp "/tars/$DIR_TAR_NAME" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}; then
+    echo "Error: Failed to upload tars/$DIR_TAR_NAME to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}. Aborting."
     exit 1
 fi
 
@@ -123,8 +124,8 @@ echo "    aws s3 cp s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}
 
 # Cleanup temporary files
 echo "Cleaning up temporary files..."
-rm -rf "/tmp/$DIR_NAME"
-rm -f "/tmp/$DIR_TAR_NAME"
+# rm -rf "/data/$DIR_NAME"
+rm -f "/tars/$DIR_TAR_NAME"
 
 
 
