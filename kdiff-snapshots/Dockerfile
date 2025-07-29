@@ -33,6 +33,8 @@ USER steampipe
 ENV PATH="/home/steampipe/.local/bin:${PATH}"
 
 COPY --chown=steampipe:steampipe *.sh .
-RUN chmod +x kdiff-entrypoint.sh
+
+RUN chmod +x {kdiff-entrypoint,csv-script}.sh
+
 
 ENTRYPOINT ["./kdiff-entrypoint.sh"]
