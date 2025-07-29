@@ -103,12 +103,12 @@ if [ "$DEBUG" = "true" ]; then
     echo "AWS Region configuration:"
     echo "AWS_REGION=${AWS_REGION:-not set}"
     echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-not set}"
-
+    ls -alh
 fi
 
 # ----------- S3 UPLOAD -----------
 echo "Uploading to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}"
-if ! aws s3 cp "/tars/$DIR_TAR_NAME" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}; then
+if ! aws s3 cp "tars/$DIR_TAR_NAME" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}; then
     echo "Error: Failed to upload tars/$DIR_TAR_NAME to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}. Aborting."
     exit 1
 fi
@@ -125,10 +125,11 @@ echo "    aws s3 cp s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}
 # Cleanup temporary files
 echo "Cleaning up temporary files..."
 # rm -rf "/data/$DIR_NAME"
-rm -f "/tars/$DIR_TAR_NAME"
+rm -f "tars/$DIR_TAR_NAME"
 
 
 
 if [ "$DEBUG" = "true" ]; then
+    echo "DEBUG mode enabled - sleeping indefinitely..."
     sleep infinity
 fi
