@@ -1,135 +1,201 @@
 #!/bin/bash
 
+# ======= CONFIGURABLE RETRY MECHANISM =======
+# Environment variables for retry configuration
+MAX_RETRIES=${MAX_RETRIES:-3}
+RETRY_DELAY=${RETRY_DELAY:-5}
+RETRY_BACKOFF_MULTIPLIER=${RETRY_BACKOFF_MULTIPLIER:-2}
+
+# Debug mode
 DEBUG=${DEBUG:-false}
 
 # SQL_LIMIT_STR is expected to be a string like "LIMIT 1000"
 SQL_LIMIT_STR=${SQL_LIMIT_STR:-""}
 
-# ------ INITIAL CHECKS -----------
+# ======= LOGGING FUNCTIONS =======
+log_debug() {
+    if [[ "$DEBUG" == "true" ]]; then
+        echo "[DEBUG] $1"
+    fi
+}
+
+log_info() {
+    echo "[INFO] $1"
+}
+
+log_warning() {
+    echo "[WARNING] $1"
+}
+
+log_error() {
+    echo "[ERROR] $1"
+}
+
+log_success() {
+    echo "[SUCCESS] $1"
+}
+
+# ======= RETRY FUNCTION =======
+retry_with_backoff() {
+    local cmd="$1"
+    local description="$2"
+    local retry_count=0
+    local current_delay=$RETRY_DELAY
+    
+    log_info "Starting: $description"
+    log_debug "Retry configuration: MAX_RETRIES=$MAX_RETRIES, RETRY_DELAY=$RETRY_DELAY, BACKOFF_MULTIPLIER=$RETRY_BACKOFF_MULTIPLIER"
+    
+    while [ $retry_count -lt $MAX_RETRIES ]; do
+        log_debug "Attempt $((retry_count + 1))/$MAX_RETRIES"
+        
+        if eval "$cmd"; then
+            log_success "$description completed successfully"
+            return 0
+        else
+            retry_count=$((retry_count + 1))
+            
+            if [ $retry_count -lt $MAX_RETRIES ]; then
+                log_warning "$description failed (attempt $retry_count/$MAX_RETRIES). Retrying in ${current_delay} seconds..."
+                sleep $current_delay
+                current_delay=$((current_delay * RETRY_BACKOFF_MULTIPLIER))
+            else
+                log_error "$description failed after $MAX_RETRIES attempts"
+                return 1
+            fi
+        fi
+    done
+}
+
+# ======= INITIAL CHECKS =======
+log_info "Starting kdiff-entrypoint.sh with retry mechanism"
 
 if [ -z "$S3_BUCKET_NAME" ]; then
-    echo "Error: S3_BUCKET_NAME environment variable is not set. Aborting."
+    log_error "S3_BUCKET_NAME environment variable is not set. Aborting."
     exit 1
 fi
 
 if [ -z "$S3_UPLOAD_PREFIX" ]; then
-    echo "Error: S3_UPLOAD_PREFIX environment variable is not set. Aborting."
+    log_error "S3_UPLOAD_PREFIX environment variable is not set. Aborting."
     exit 1
 fi
 
 # Check if AWS_DEFAULT_REGION is not set, try to detect from bucket
 if [ -z "$AWS_DEFAULT_REGION" ]; then
-    echo "AWS_DEFAULT_REGION not set, attempting to detect from bucket location..."
+    log_info "AWS_DEFAULT_REGION not set, attempting to detect from bucket location..."
     
-    # Get bucket location using AWS CLI
-    BUCKET_LOCATION=$(aws s3api get-bucket-location --bucket "$S3_BUCKET_NAME" 2>/dev/null)
+    # Get bucket location using AWS CLI with retry
+    retry_with_backoff \
+        "aws s3api get-bucket-location --bucket \"$S3_BUCKET_NAME\" 2>/dev/null | jq -r '.LocationConstraint // \"us-east-1\"'" \
+        "Detect bucket region"
     
     if [ $? -eq 0 ]; then
         # Parse the JSON response
-        export AWS_REGION=$(echo "$BUCKET_LOCATION" | jq -r '.LocationConstraint // "us-east-1"')
+        export AWS_REGION=$(aws s3api get-bucket-location --bucket "$S3_BUCKET_NAME" 2>/dev/null | jq -r '.LocationConstraint // "us-east-1"')
         export AWS_DEFAULT_REGION="$AWS_REGION"
-        echo "Detected bucket region: $AWS_DEFAULT_REGION"
+        log_info "Detected bucket region: $AWS_DEFAULT_REGION"
     else
-        echo "Warning: Could not detect bucket region. AWS credentials may be invalid or bucket may not exist."
-        echo "Please set AWS_DEFAULT_REGION manually if needed."
+        log_warning "Could not detect bucket region. AWS credentials may be invalid or bucket may not exist."
+        log_warning "Please set AWS_DEFAULT_REGION manually if needed."
     fi
 fi
 
-
-# ----------- INSTALL PLUGINS -----------
-
+# ======= INSTALL PLUGINS =======
 if [ -n "$INSTALL_STEAMPIPE_PLUGINS" ]; then
-    echo "Installing Plugins: $INSTALL_STEAMPIPE_PLUGINS"
+    log_info "Installing Plugins: $INSTALL_STEAMPIPE_PLUGINS"
     for mod in $INSTALL_STEAMPIPE_PLUGINS; do
-        echo "Installing Plugin: $mod"
-        steampipe plugin install "$mod" > /dev/null
+        log_info "Installing Plugin: $mod"
+        retry_with_backoff \
+            "steampipe plugin install \"$mod\" > /dev/null" \
+            "Install steampipe plugin: $mod"
     done
 fi
 
-echo "Updating Plugins..."
-steampipe plugin update --all
+log_info "Updating Plugins..."
+retry_with_backoff \
+    "steampipe plugin update --all" \
+    "Update all steampipe plugins"
 
-echo "Steampipe Plugins:"
+log_info "Steampipe Plugins:"
 steampipe plugin list
 
-# ----------- INIT DB -----------
-
+# ======= INIT DB =======
 # run the initdb.sh in a sub-shell to not block the steampipe service start
 if [ -f "init-db.sh" ]; then
-    echo "Running init-db.sh script..."
+    log_info "Running init-db.sh script..."
     (bash init-db.sh) &
 fi
 
-# ----------- START STEAMPIPE SERVICE -----------
+# ======= START STEAMPIPE SERVICE =======
+log_info "Starting steampipe service..."
+retry_with_backoff \
+    "bash start-and-wait-steampipe-service.sh" \
+    "Start and wait for steampipe service"
 
-bash start-and-wait-steampipe-service.sh
-echo "------------*------------*------------"
+log_info "------------*------------*------------"
 
-# ----------- BACKUP KUBERNETES STATE -----------
+# ======= BACKUP KUBERNETES STATE =======
 # snapshot kubernetes state
-
 export DIR_NAME="kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
 export DIR_TAR_NAME="$DIR_NAME.tar.gz"
 
-echo "Running csv-script.sh to export Kubernetes resources to CSV files in data/$DIR_NAME..."
-if ! bash csv-script.sh --out-dir "$DIR_NAME" $([ "$DEBUG" = "true" ] && echo "--debug"); then
-    echo "Error: csv-script.sh failed. Aborting."
-    exit 1
-fi
+log_info "Running csv-script.sh to export Kubernetes resources to CSV files in data/$DIR_NAME..."
+retry_with_backoff \
+    "bash csv-script.sh --out-dir \"$DIR_NAME\" \$([ \"$DEBUG\" = \"true\" ] && echo \"--debug\")" \
+    "Export Kubernetes resources to CSV"
+
 ls -al "data/$DIR_NAME"
-echo "------------*------------*------------"
+log_info "------------*------------*------------"
 
 mkdir -p tars/
 # tar the snapshot
-echo "Creating tar archive..."
-echo "Running command: tar -czf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\""
-if ! tar -czf "tars/$DIR_TAR_NAME" -C "data" "$DIR_NAME"; then
-    echo "Error: Failed to create $DIR_TAR_NAME tar archive. Aborting."
-    echo "tar exit code: $?"
-    exit 1
-fi
-echo "Successfully created tar archive at tars/$DIR_TAR_NAME"
+log_info "Creating tar archive..."
+log_debug "Running command: tar -czf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\""
+retry_with_backoff \
+    "tar -czf \"tars/$DIR_TAR_NAME\" -C \"data\" \"$DIR_NAME\"" \
+    "Create tar archive"
+
+log_success "Successfully created tar archive at tars/$DIR_TAR_NAME"
 ls -alh "tars/$DIR_TAR_NAME"
-echo "Archive contents:"
+log_info "Archive contents:"
 tar -tvf "tars/$DIR_TAR_NAME"
-# upload the snapshot to s3
-echo "------------*------------*------------"
+
+# ======= S3 UPLOAD =======
+log_info "------------*------------*------------"
 
 if [ "$DEBUG" = "true" ]; then
-    echo "Checking AWS credentials..."
+    log_debug "Checking AWS credentials..."
     aws sts get-caller-identity
-    echo "Listing contents of S3 bucket ${S3_BUCKET_NAME}..."
+    log_debug "Listing contents of S3 bucket ${S3_BUCKET_NAME}..."
     aws s3 ls s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}
-    echo "AWS Region configuration:"
-    echo "AWS_REGION=${AWS_REGION:-not set}"
-    echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-not set}"
+    log_debug "AWS Region configuration:"
+    log_debug "AWS_REGION=${AWS_REGION:-not set}"
+    log_debug "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-not set}"
     ls -alh
 fi
 
-# ----------- S3 UPLOAD -----------
-echo "Uploading to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}"
-if ! aws s3 cp "tars/$DIR_TAR_NAME" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}; then
-    echo "Error: Failed to upload tars/$DIR_TAR_NAME to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}. Aborting."
-    exit 1
-fi
+log_info "Uploading to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}"
+retry_with_backoff \
+    "aws s3 cp \"tars/$DIR_TAR_NAME\" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}" \
+    "Upload tar archive to S3"
 
-echo "------------*------------*------------"
+log_info "------------*------------*------------"
 
-echo "Listing s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}"
+log_info "Listing s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}"
 echo "---"
 aws s3 ls s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}
 
-echo "Download with command:"
-echo "    aws s3 cp s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME} ."
+log_info "Download with command:"
+log_info "    aws s3 cp s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME} ."
 
-# Cleanup temporary files
-echo "Cleaning up temporary files..."
+# ======= CLEANUP =======
+log_info "Cleaning up temporary files..."
 # rm -rf "/data/$DIR_NAME"
 rm -f "tars/$DIR_TAR_NAME"
 
-
-
+# ======= DEBUG MODE =======
 if [ "$DEBUG" = "true" ]; then
-    echo "DEBUG mode enabled - sleeping indefinitely..."
+    log_info "DEBUG mode enabled - sleeping indefinitely..."
     sleep infinity
 fi
+
+log_success "kdiff entrypoint completed successfully"
