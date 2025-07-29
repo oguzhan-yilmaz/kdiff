@@ -3,7 +3,7 @@ name: kdiff-snapshots
 description: Snapshot your Kubernetes state periodically and compare changes with kdiff CLI
 type: application
 version: 0.1.0
-appVersion: "0.0.47"
+appVersion: "0.0.48"
 keywords:
   - kdiff
   - snapshots
