@@ -98,7 +98,7 @@ secretEnvVars:
   AWS_ACCESS_KEY_ID: ""
   AWS_SECRET_ACCESS_KEY: ""
   # Change endpoint AWS_ENDPOINT_URL_S3 with S3-compatible storage
-  AWS_ENDPOINT_URL_S3: 'https://s3.amazonaws.com'
+  # AWS_ENDPOINT_URL_S3: 'https://my-minio-instance.mycompany.com'
   S3_BUCKET_NAME: ""
   S3_UPLOAD_PREFIX: "my-kdiff-snapshots/dev/"
 
