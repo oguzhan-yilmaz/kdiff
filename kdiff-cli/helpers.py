@@ -3,8 +3,13 @@ import json
 import subprocess
 import logging
 import os
+import tarfile
+import tempfile
 from pathlib import Path
 from typing import Optional, Dict
+import pandas as pd
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 
 def get_logger(name: str = "kdiff") -> logging.Logger:
@@ -191,3 +196,305 @@ def qsv_diff_different_files(left: Path, right: Path, different_files: list) -> 
             logger.error(f"✗ Unexpected error processing {file_path}: {e}")
 
     logger.info(f"Diff processing completed. Results saved in: {diff_dir}")
+
+
+def create_excel_from_backup(backup_path: Path, output_path: Optional[Path] = None) -> None:
+    """
+    Extract CSV files from a backup (tar file or folder) and create an Excel file with different sheets
+    
+    Args:
+        backup_path: Path to the backup (tar file or folder)
+        output_path: Optional output path for the Excel file
+    """
+    logger = get_logger()
+    
+    # Determine output path
+    if output_path is None:
+        if backup_path.is_file() and backup_path.suffix in ['.tar', '.tar.gz', '.tgz']:
+            output_path = backup_path.with_suffix('.xlsx')
+        else:
+            output_path = backup_path.with_suffix('.xlsx')
+    
+    logger.info(f"Processing backup: {backup_path}")
+    logger.info(f"Output Excel file: {output_path}")
+    
+    # Check if it's a tar file or folder
+    if backup_path.is_file() and backup_path.suffix in ['.tar', '.tar.gz', '.tgz']:
+        # Handle tar file
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # Extract the tar file
+            logger.info("Extracting backup tar file...")
+            with tarfile.open(backup_path, 'r:*') as tar:
+                tar.extractall(temp_path)
+            
+            # Process CSV files from extracted directory
+            process_csv_files_to_excel(temp_path, output_path, logger)
+    elif backup_path.is_dir():
+        # Handle folder directly
+        logger.info("Processing backup folder...")
+        process_csv_files_to_excel(backup_path, output_path, logger)
+    else:
+        raise ValueError(f"Invalid backup path: {backup_path}. Must be a tar file (.tar, .tar.gz, .tgz) or a folder.")
+
+
+def process_csv_files_to_excel(source_path: Path, output_path: Path, logger) -> None:
+    """
+    Process CSV files from a source path and create an Excel file
+    
+    Args:
+        source_path: Path containing CSV files
+        output_path: Output Excel file path
+        logger: Logger instance
+    """
+    # Find all CSV files
+    csv_files = list(source_path.rglob("*.csv"))
+    logger.info(f"Found {len(csv_files)} CSV files")
+    
+    if not csv_files:
+        raise ValueError("No CSV files found in the backup")
+    
+    # Create Excel workbook
+    wb = Workbook()
+    # Remove the default sheet
+    wb.remove(wb.active)
+    
+    # Store valid sheets for later sorting
+    valid_sheets = []
+    
+    # Process each CSV file
+    for csv_file in csv_files:
+        try:
+            # Read CSV file
+            df = pd.read_csv(csv_file)
+            
+            # Skip if only has header (no data rows)
+            if len(df) == 0:
+                logger.info(f"Skipping empty CSV file: {csv_file.name}")
+                continue
+            
+            # Create sheet name from file name (sanitize for Excel)
+            sheet_name = csv_file.stem
+            # Excel sheet names have limitations
+            sheet_name = sheet_name[:31]  # Max 31 characters
+            sheet_name = sheet_name.replace('[', '').replace(']', '').replace('*', '').replace('?', '').replace('/', '').replace('\\', '')
+            
+            # Store sheet info for later sorting
+            valid_sheets.append({
+                'name': sheet_name,
+                'data': df,
+                'row_count': len(df)
+            })
+            
+            logger.info(f"Processed CSV: {csv_file.name} ({len(df)} rows)")
+            
+        except Exception as e:
+            logger.warning(f"Error processing {csv_file.name}: {e}")
+            continue
+    
+    if not valid_sheets:
+        raise ValueError("No valid CSV files with data found in the backup")
+    
+    # Sort sheets alphabetically by name
+    valid_sheets.sort(key=lambda x: x['name'].lower())
+    
+    # Create worksheets in alphabetical order
+    for sheet_info in valid_sheets:
+        ws = wb.create_sheet(title=sheet_info['name'])
+        
+        # Add data to worksheet
+        for r in dataframe_to_rows(sheet_info['data'], index=False, header=True):
+            ws.append(r)
+        
+        logger.info(f"Added sheet: {sheet_info['name']} ({sheet_info['row_count']} rows)")
+    
+    # Save the Excel file
+    wb.save(output_path)
+    logger.info(f"Excel file saved: {output_path}")
+
+
+def create_diff_excel(left_backup: Path, right_backup: Path, output_path: Optional[Path] = None) -> None:
+    """
+    Compare two backups (tar files or folders) and create a colored Excel file showing differences
+    
+    Args:
+        left_backup: Path to the left backup (tar file or folder)
+        right_backup: Path to the right backup (tar file or folder)
+        output_path: Optional output path for the Excel file
+    """
+    logger = get_logger()
+    
+    # Determine output path
+    if output_path is None:
+        left_name = left_backup.stem
+        right_name = right_backup.stem
+        output_path = Path(f"diff_{left_name}_vs_{right_name}.xlsx")
+    
+    logger.info(f"Comparing backups: {left_backup} vs {right_backup}")
+    logger.info(f"Output Excel file: {output_path}")
+    
+    # Helper function to get source path (extract tar if needed)
+    def get_source_path(backup_path: Path) -> Path:
+        if backup_path.is_file() and backup_path.suffix in ['.tar', '.tar.gz', '.tgz']:
+            # Create temporary directory for extraction
+            temp_dir = tempfile.mkdtemp()
+            temp_path = Path(temp_dir)
+            
+            logger.info(f"Extracting {backup_path.name}...")
+            with tarfile.open(backup_path, 'r:*') as tar:
+                tar.extractall(temp_path)
+            
+            return temp_path
+        elif backup_path.is_dir():
+            return backup_path
+        else:
+            raise ValueError(f"Invalid backup path: {backup_path}. Must be a tar file (.tar, .tar.gz, .tgz) or a folder.")
+    
+    # Get source paths
+    left_source = get_source_path(left_backup)
+    right_source = get_source_path(right_backup)
+    
+    try:
+        # Compare folders to find different files
+        result = compare_folders(left_source, right_source)
+        different_files = result.get("different_files", [])
+        
+        if not different_files:
+            logger.info("No different files found between backups")
+            return
+        
+        logger.info(f"Found {len(different_files)} different files to process")
+        
+        # Create Excel workbook
+        wb = Workbook()
+        wb.remove(wb.active)  # Remove default sheet
+        
+        # Process each different file
+        for file_path in different_files:
+            if not file_path.endswith('.csv'):
+                logger.info(f"Skipping non-CSV file: {file_path}")
+                continue
+            
+            try:
+                left_file = left_source / file_path
+                right_file = right_source / file_path
+                
+                if not left_file.exists() or not right_file.exists():
+                    logger.warning(f"File not found in one of the backups: {file_path}")
+                    continue
+                
+                # Create sheet name
+                sheet_name = Path(file_path).stem
+                sheet_name = sheet_name[:31]  # Excel limit
+                sheet_name = sheet_name.replace('[', '').replace(']', '').replace('*', '').replace('?', '').replace('/', '').replace('\\', '')
+                
+                # Run qsv diff
+                diff_result = run_qsv_diff(left_file, right_file)
+                
+                if diff_result is not None:
+                    # Create worksheet with colored cells
+                    ws = wb.create_sheet(title=sheet_name)
+                    create_colored_diff_sheet(ws, diff_result)
+                    logger.info(f"Added diff sheet: {sheet_name}")
+                
+            except Exception as e:
+                logger.warning(f"Error processing {file_path}: {e}")
+                continue
+        
+        # Save the Excel file
+        wb.save(output_path)
+        logger.info(f"Diff Excel file saved: {output_path}")
+        
+    finally:
+        # Clean up temporary directories if they were created
+        if left_source != left_backup:
+            import shutil
+            shutil.rmtree(left_source, ignore_errors=True)
+        if right_source != right_backup:
+            import shutil
+            shutil.rmtree(right_source, ignore_errors=True)
+
+
+def run_qsv_diff(left_file: Path, right_file: Path) -> Optional[pd.DataFrame]:
+    """
+    Run qsv diff command and return the result as a DataFrame
+    
+    Args:
+        left_file: Path to left CSV file
+        right_file: Path to right CSV file
+    
+    Returns:
+        DataFrame with diff results or None if error
+    """
+    logger = get_logger()
+    
+    cmd = [
+        "qsv",
+        "diff",
+        "--drop-equal-fields",
+        str(left_file),
+        str(right_file),
+    ]
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        if result.stdout.strip():
+            # Parse CSV output
+            from io import StringIO
+            df = pd.read_csv(StringIO(result.stdout))
+            return df
+        else:
+            logger.info("No differences found")
+            return None
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running qsv diff: {e}")
+        return None
+
+
+def create_colored_diff_sheet(ws, df: pd.DataFrame) -> None:
+    """
+    Create a worksheet with colored cells based on diff results
+    
+    Args:
+        ws: Worksheet to populate
+        df: DataFrame with diff results
+    """
+    from openpyxl.styles import PatternFill
+    
+    # Define colors
+    red_fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")  # Light red for deletions
+    green_fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")  # Light green for additions
+    orange_fill = PatternFill(start_color="FFE6CC", end_color="FFE6CC", fill_type="solid")  # Light orange for modifications
+    
+    # Add headers
+    for col_idx, col_name in enumerate(df.columns, 1):
+        cell = ws.cell(row=1, column=col_idx, value=col_name)
+        cell.font = cell.font.copy(bold=True)
+    
+    # Add data with colors
+    for row_idx, (_, row) in enumerate(df.iterrows(), 2):
+        for col_idx, value in enumerate(row, 1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            
+            # Color based on diff type (first column usually indicates + or -)
+            if col_idx == 1:
+                if str(value).startswith('-'):
+                    cell.fill = red_fill
+                elif str(value).startswith('+'):
+                    cell.fill = green_fill
+                else:
+                    cell.fill = orange_fill
+    
+    # Auto-adjust column widths
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)  # Cap at 50 characters
+        ws.column_dimensions[column_letter].width = adjusted_width
