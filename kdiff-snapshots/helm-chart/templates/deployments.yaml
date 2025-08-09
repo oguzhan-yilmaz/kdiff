@@ -93,13 +93,31 @@ spec:
           {{- else }}
           resources: {}
           {{- end }}
-          {{- if .Values.filegator.volumeMounts }}
+          {{- if and .Values.filegator (hasKey .Values.filegator "volumeMounts") }}
+          {{- $fgv := index .Values.filegator "volumeMounts" }}
+          {{- if $fgv }}
           volumeMounts:
-            {{- toYaml .Values.filegator.volumeMounts | nindent 12 }}
+            {{- toYaml $fgv | nindent 12 }}
+          {{- else }}
+          volumeMounts:
+            - name: data-volume
+              mountPath: /var/www/filegator/repository/clustername-data
+            - name: tars-volume
+              mountPath: /var/www/filegator/repository/tars
           {{- end }}
-          {{- if .Values.filegator.securityContext }}
+          {{- else }}
+          volumeMounts:
+            - name: data-volume
+              mountPath: /var/www/filegator/repository/clustername-data
+            - name: tars-volume
+              mountPath: /var/www/filegator/repository/tars
+          {{- end }}
+          {{- if and .Values.filegator (hasKey .Values.filegator "securityContext") }}
+          {{- $sec := index .Values.filegator "securityContext" }}
+          {{- if $sec }}
           securityContext:
-            {{- toYaml .Values.filegator.securityContext | nindent 12 }}
+            {{- toYaml $sec | nindent 12 }}
+          {{- end }}
           {{- end }}
         {{- end }}
       {{- include "kdiff-cli.containerVolumes" . | indent 6}}

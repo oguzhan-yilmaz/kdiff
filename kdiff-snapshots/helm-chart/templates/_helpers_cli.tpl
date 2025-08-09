@@ -1,7 +1,7 @@
 {{/*
 */}}
 {{- define "kdiff-cli.containerVolumeMounts" -}}
-{{- if or (or .Values.steampipeConfig .Values.steampipeSecretCredentials) .Values.initDbSqlScripts }}
+{{- if or (or (or .Values.steampipeConfig .Values.steampipeSecretCredentials) .Values.initDbSqlScripts) .Values.filegator.enabled }}
 volumeMounts:
   {{- range $key, $value := .Values.steampipeConfig }}
   - name: steampipe-config-volume
@@ -18,6 +18,12 @@ volumeMounts:
     mountPath: /home/steampipe/initdb-sql-scripts/{{ $key }}
     subPath: {{ $key }}
   {{- end }}
+  {{- if .Values.filegator.enabled }}
+  - name: data-volume
+    mountPath: /home/steampipe/data
+  - name: tars-volume
+    mountPath: /home/steampipe/tars
+  {{- end }}
 {{- else }}
 volumeMounts: []
 {{- end }}
@@ -25,7 +31,7 @@ volumeMounts: []
 
 
 {{- define "kdiff-cli.containerVolumes" -}}
-{{- if or (or (or .Values.steampipeConfig .Values.steampipeSecretCredentials) .Values.initDbSqlScripts) (and .Values.filegator.enabled .Values.filegator.volumes) }}
+{{- if or (or (or .Values.steampipeConfig .Values.steampipeSecretCredentials) .Values.initDbSqlScripts) .Values.filegator.enabled }}
 volumes:
   {{- if or .Values.steampipeConfig }}
   - name: steampipe-config-volume
@@ -59,6 +65,12 @@ volumes:
       - key: {{ $key }}
         path: {{ $key }}  # same as subPath
       {{- end }}
+  {{- end }}
+  {{- if .Values.filegator.enabled }}
+  - name: data-volume
+    emptyDir: {}
+  - name: tars-volume
+    emptyDir: {}
   {{- end }}
   {{- if and .Values.filegator.enabled .Values.filegator.volumes }}
   {{- toYaml .Values.filegator.volumes | nindent 2 }}
