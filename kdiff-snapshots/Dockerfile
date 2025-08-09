@@ -27,6 +27,9 @@ RUN ln -s /usr/local/aws-cli/v2/current/bin/aws /usr/local/bin/aws
 
 COPY --from=kubectl /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/kubectl
 
+RUN echo "Welcome to Kdiff!" > /etc/motd && \
+    echo "TODO: Exec docs here, cli help here, etc." >> /etc/motd
+
 USER steampipe
 
 # Add the local bin directory to PATH
