@@ -1,9 +1,0 @@
-[project]
-name = "kdiff"
-version = "0.0.1"
-description = ""
-readme = "README.md"
-dependencies = []
-
-[tool.uv.workspace]
-members = ["kdiff-cli"]
