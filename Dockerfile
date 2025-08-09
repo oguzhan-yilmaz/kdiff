@@ -4,7 +4,7 @@ FROM bitnami/kubectl:latest as kubectl
 FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:latest
 ENV DEBIAN_FRONTEND=noninteractive
 # SHELL ["/bin/bash", "-c"]
-
+WORKDIR /home/steampipe
 USER root
 RUN apt-get update -y \
     && apt-get install -y wget gpg \
@@ -38,7 +38,6 @@ ENV PATH="/home/steampipe/.local/bin:${PATH}"
 COPY --chown=steampipe:steampipe kdiff-snapshots-entrypoint.sh .
 COPY --chown=steampipe:steampipe csv-script.sh .
 
-RUN chmod +x kdiff-snapshots-entrypoint.sh \
-    && chmod +x csv-script.sh
+RUN chmod +x kdiff-snapshots-entrypoint.sh
 
 ENTRYPOINT ["./kdiff-snapshots-entrypoint.sh"]
