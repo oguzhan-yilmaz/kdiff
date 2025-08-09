@@ -2,6 +2,27 @@ apiVersion: v1
 entries:
   kdiff:
   - apiVersion: v2
+    appVersion: 0.0.65
+    created: "2025-08-09T20:06:41.906300806Z"
+    description: Snapshot your Kubernetes state periodically and compare changes with
+      kdiff CLI
+    digest: 9cdba24274ee6bd57ddf102cdae2b0ee46b70928eac161f04b6c217b84b1e067
+    home: https://github.com/oguzhan-yilmaz/kdiff
+    keywords:
+    - kdiff
+    - snapshots
+    - steampipe
+    - kubernetes
+    maintainers:
+    - name: Oguzhan Yilmaz
+    name: kdiff
+    sources:
+    - https://github.com/oguzhan-yilmaz/kdiff
+    type: application
+    urls:
+    - https://github.com/oguzhan-yilmaz/kdiff/releases/download/v0.0.65/kdiff-0.0.65.tgz
+    version: 0.0.65
+  - apiVersion: v2
     appVersion: 0.0.64
     created: "2025-08-09T20:05:28.694341933Z"
     description: Snapshot your Kubernetes state periodically and compare changes with
@@ -737,4 +758,4 @@ entries:
     urls:
     - https://github.com/oguzhan-yilmaz/kdiff/releases/download/v0.0.30/kdiff-snapshots-0.0.30.tgz
     version: 0.0.30
-generated: "2025-08-09T20:05:28.693097803Z"
+generated: "2025-08-09T20:06:41.905584371Z"
