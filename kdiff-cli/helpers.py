@@ -10,6 +10,7 @@ from typing import Optional, Dict
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
+import yaml
 
 
 def get_logger(name: str = "kdiff") -> logging.Logger:
@@ -239,6 +240,36 @@ def create_excel_from_backup(backup_path: Path, output_path: Optional[Path] = No
         raise ValueError(f"Invalid backup path: {backup_path}. Must be a tar file (.tar, .tar.gz, .tgz) or a folder.")
 
 
+def format_json_as_yaml(value):
+    """
+    Convert JSON string to YAML format for better readability
+    
+    Args:
+        value: String that might contain JSON
+    
+    Returns:
+        Formatted YAML string or original value if not JSON
+    """
+    if not isinstance(value, str):
+        return value
+    
+    # Try to parse as JSON
+    try:
+        # Check if it looks like JSON (starts with { or [)
+        stripped = value.strip()
+        if (stripped.startswith('{') and stripped.endswith('}')) or \
+           (stripped.startswith('[') and stripped.endswith(']')):
+            parsed = json.loads(value)
+            # Convert to YAML with proper formatting and explicit newlines
+            yaml_str = yaml.dump(parsed, default_flow_style=False, sort_keys=False, indent=2, allow_unicode=True, width=float("inf"))
+            # Ensure we have proper line breaks and trim extra newlines at the end
+            return yaml_str.rstrip('\n')
+    except (json.JSONDecodeError, yaml.YAMLError):
+        pass
+    
+    return value
+
+
 def process_csv_files_to_excel(source_path: Path, output_path: Path, logger) -> None:
     """
     Process CSV files from a source path and create an Excel file
@@ -274,6 +305,12 @@ def process_csv_files_to_excel(source_path: Path, output_path: Path, logger) -> 
                 logger.info(f"Skipping empty CSV file: {csv_file.name}")
                 continue
             
+            # Format JSON columns as YAML
+            for column in df.columns:
+                # Check if column might contain JSON (common column names)
+                if any(keyword in column.lower() for keyword in ['json', 'data', 'config', 'spec', 'metadata', 'labels', 'annotations', 'info']):
+                    df[column] = df[column].apply(format_json_as_yaml)
+            
             # Create sheet name from file name (sanitize for Excel)
             sheet_name = csv_file.stem
             # Excel sheet names have limitations
@@ -303,11 +340,26 @@ def process_csv_files_to_excel(source_path: Path, output_path: Path, logger) -> 
     for sheet_info in valid_sheets:
         ws = wb.create_sheet(title=sheet_info['name'])
         
-        # Add data to worksheet
-        for r in dataframe_to_rows(sheet_info['data'], index=False, header=True):
-            ws.append(r)
-        
-        logger.info(f"Added sheet: {sheet_info['name']} ({sheet_info['row_count']} rows)")
+        # Add data to worksheet with proper formatting
+        for row_idx, row in enumerate(dataframe_to_rows(sheet_info['data'], index=False, header=True), 1):
+            for col_idx, value in enumerate(row, 1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=value)
+                
+                # Set consistent alignment for all cells (top alignment)
+                from openpyxl.styles import Alignment
+                cell.alignment = Alignment(wrap_text=True, vertical='top')
+                
+                # Adjust row height for multi-line content
+                if isinstance(value, str) and '\n' in value:
+                    line_count = value.count('\n') + 1
+                    # Set minimum row height based on content
+                    min_height = max(15, line_count * 15)  # 15 points per line
+                    ws.row_dimensions[row_idx].height = min_height
+                    
+                    # Force Excel to recognize newlines by setting the cell value explicitly
+                    cell.value = str(value)
+            
+            logger.info(f"Added sheet: {sheet_info['name']} ({sheet_info['row_count']} rows)")
     
     # Save the Excel file
     wb.save(output_path)
