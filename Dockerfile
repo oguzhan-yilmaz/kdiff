@@ -37,6 +37,6 @@ WORKDIR /home/steampipe
 ENV PATH="/home/steampipe/.local/bin:${PATH}"
 
 COPY --chown=steampipe:steampipe *.sh .
-RUN chmod +x ./*.sh
+RUN chmod +x ./kdiff-snapshots-entrypoint.sh && chmod +x ./csv-script.sh
 
 ENTRYPOINT ["./kdiff-snapshots-entrypoint.sh"]
