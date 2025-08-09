@@ -5,10 +5,10 @@ metadata:
   labels:
     {{- include "kdiff-snapshots.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.timeZone }}
-  timeZone: {{ .Values.timeZone }}
+  {{- if .Values.cronjob.timeZone }}
+  timeZone: {{ .Values.cronjob.timeZone }}
   {{- end }}
-  schedule: {{ .Values.schedule | required ".schedule is required" | quote }}
+  schedule: {{ .Values.cronjob.schedule | required ".cronjob.schedule is required" | quote }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 5
   failedJobsHistoryLimit: 2
@@ -61,7 +61,7 @@ spec:
                 {{- toYaml .Values.securityContext | nindent 16 }}
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
-              {{- if .Values.debug }}
+              {{- if .Values.sleep }}
               command: ["sleep", "infinity"]
               {{- else if .Values.customCommand }}
               command: 

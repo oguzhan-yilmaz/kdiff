@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kdiff-cli.fullname" . }}
+  labels:
+    {{- include "kdiff-cli.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "kdiff-cli.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kdiff-cli.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      automountServiceAccountToken: true
+      serviceAccountName: {{ include "kdiff-cli.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "kdiff-cli.fullname" . }}
+          envFrom:
+          - configMapRef:
+              name: {{ include "kdiff-cli.fullname" . }}-cm-env-vars
+          - secretRef:
+              name: {{ include "kdiff-cli.fullname" . }}-steampipe-creds
+          {{- if .Values.secretEnvVars }}
+          - secretRef:
+              name: {{ include "kdiff-cli.fullname" . }}-secret-env-vars
+          {{- end }}
+          {{- if or ((.Values.serviceAccount).awsIrsa).enabled .Values.envVarSecretReferences}}
+          env:
+            {{- if .Values.envVarSecretReferences }}
+            {{- toYaml .Values.envVarSecretReferences | nindent 12 }}
+            {{- end }}
+            {{- if ((.Values.serviceAccount).awsIrsa).enabled }}
+            - name: AWS_DEFAULT_REGION
+              value: {{ .Values.serviceAccount.awsIrsa.region | quote }}
+            - name: AWS_ROLE_ARN
+              value: {{ .Values.serviceAccount.awsIrsa.roleArn | quote }}
+            {{- end }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.sleep }}
+          command: ["sleep", "infinity"]
+          {{- else if .Values.customCommand }}
+          command: 
+            {{- toYaml .Values.customCommand | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          {{- if .Values.resources }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- else }}
+          resources: {}
+          {{- end }}
+          {{- include "kdiff-cli.containerVolumeMounts" . | indent 10}}
+        {{- if .Values.filegator.enabled }}
+        - name: filegator
+          image: "{{ .Values.filegator.image.repository }}:{{ .Values.filegator.image.tag }}"
+          imagePullPolicy: {{ .Values.filegator.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.filegator.port }}
+              protocol: TCP
+          {{- if .Values.filegator.envVars }}
+          env:
+            {{- range $key, $value := .Values.filegator.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.filegator.resources }}
+          resources:
+            {{- toYaml .Values.filegator.resources | nindent 12 }}
+          {{- else }}
+          resources: {}
+          {{- end }}
+          {{- if .Values.filegator.volumeMounts }}
+          volumeMounts:
+            {{- toYaml .Values.filegator.volumeMounts | nindent 12 }}
+          {{- end }}
+          {{- if .Values.filegator.securityContext }}
+          securityContext:
+            {{- toYaml .Values.filegator.securityContext | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      {{- include "kdiff-cli.containerVolumes" . | indent 6}}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }} 
