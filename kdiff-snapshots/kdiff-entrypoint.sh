@@ -165,11 +165,11 @@ log_info "------------*------------*------------"
 if [ "$DEBUG" = "true" ]; then
     log_debug "Checking AWS credentials..."
     aws sts get-caller-identity
-    log_debug "Listing contents of S3 bucket ${S3_BUCKET_NAME}..."
-    aws s3 ls s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}
     log_debug "AWS Region configuration:"
     log_debug "AWS_REGION=${AWS_REGION:-not set}"
     log_debug "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-not set}"
+    log_debug "Listing contents of S3 bucket ${S3_BUCKET_NAME}..."
+    aws s3 ls s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}
     ls -alh
 fi
 
