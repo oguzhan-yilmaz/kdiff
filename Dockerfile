@@ -1,11 +1,11 @@
 FROM amazon/aws-cli:latest AS awscli
-FROM bitnami/kubectl:latest as kubectl
+FROM bitnami/kubectl:latest AS kubectl
 
 FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:latest
 ENV DEBIAN_FRONTEND=noninteractive
 # SHELL ["/bin/bash", "-c"]
-WORKDIR /home/steampipe
 USER root
+WORKDIR /home/steampipe
 RUN apt-get update -y \
     && apt-get install -y wget gpg \
     && wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | gpg --dearmor -o /usr/share/keyrings/qsv-deb.gpg \
@@ -31,6 +31,7 @@ RUN echo "Welcome to Kdiff!" > /etc/motd && \
     echo "TODO: Exec docs here, cli help here, etc." >> /etc/motd
 
 USER steampipe
+WORKDIR /home/steampipe
 
 # Add the local bin directory to PATH
 ENV PATH="/home/steampipe/.local/bin:${PATH}"
