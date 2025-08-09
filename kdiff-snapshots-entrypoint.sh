@@ -67,7 +67,7 @@ retry_with_backoff() {
 }
 
 # ======= INITIAL CHECKS =======
-log_info "Starting kdiff-entrypoint.sh with retry mechanism"
+log_info "Starting kdiff-snapshots-entrypoint.sh with retry mechanism"
 
 if [ -z "$S3_BUCKET_NAME" ]; then
     log_error "S3_BUCKET_NAME environment variable is not set. Aborting."
@@ -198,4 +198,4 @@ if [ "$DEBUG" = "true" ]; then
     sleep infinity
 fi
 
-log_success "kdiff-entrypoint.sh completed successfully"
+log_success "kdiff-snapshots-entrypoint.sh completed successfully"
