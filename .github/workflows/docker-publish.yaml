@@ -60,7 +60,7 @@ jobs:
           push: true
           tags: ${{ steps.metad.outputs.tags }}
           labels: ${{ steps.metad.outputs.labels }}
-          file: ./kdiff-snapshots/Dockerfile
+          file: ./Dockerfile
           cache-from: type=gha # Enable GitHub Actions cache
           cache-to: type=gha,mode=max
           provenance: true # Enable provenance attestation
