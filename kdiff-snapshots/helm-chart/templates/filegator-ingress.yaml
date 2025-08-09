@@ -1,0 +1,44 @@
+{{- if and .Values.filegator.enabled .Values.filegator.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "kdiff-cli.fullname" . }}-filegator
+  labels:
+    {{- include "kdiff-cli.labels" . | nindent 4 }}
+    app.kubernetes.io/component: filegator
+  {{- with .Values.filegator.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.filegator.ingress.className }}
+  ingressClassName: {{ .Values.filegator.ingress.className }}
+  {{- end }}
+  {{- if .Values.filegator.ingress.tls }}
+  tls:
+    {{- range .Values.filegator.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.filegator.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- if .pathType }}
+            pathType: {{ .pathType }}
+            {{- end }}
+            backend:
+              service:
+                name: {{ include "kdiff-cli.fullname" $ }}-filegator
+                port:
+                  number: {{ $.Values.filegator.port }}
+          {{- end }}
+    {{- end }}
+{{- end }} 

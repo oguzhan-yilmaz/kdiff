@@ -1,0 +1,18 @@
+{{- if .Values.filegator.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kdiff-cli.fullname" . }}-filegator
+  labels:
+    {{- include "kdiff-cli.labels" . | nindent 4 }}
+    app.kubernetes.io/component: filegator
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.filegator.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "kdiff-cli.selectorLabels" . | nindent 4 }}
+{{- end }} 
