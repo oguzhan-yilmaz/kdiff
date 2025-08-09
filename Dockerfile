@@ -36,8 +36,8 @@ WORKDIR /home/steampipe
 # Add the local bin directory to PATH
 ENV PATH="/home/steampipe/.local/bin:${PATH}"
 
-COPY --chown=steampipe:steampipe kdiff-snapshots-entrypoint.sh .
+COPY kdiff-snapshots-entrypoint.sh /home/steampipe/
+RUN chown steampipe:steampipe /home/steampipe/kdiff-snapshots-entrypoint.sh && \
+    chmod +x /home/steampipe/kdiff-snapshots-entrypoint.sh
 
-RUN chmod +x kdiff-snapshots-entrypoint.sh
-
-ENTRYPOINT ["./kdiff-snapshots-entrypoint.sh"]
+ENTRYPOINT ["/home/steampipe/kdiff-snapshots-entrypoint.sh"]
