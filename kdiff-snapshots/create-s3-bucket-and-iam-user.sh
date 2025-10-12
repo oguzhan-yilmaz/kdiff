@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set your company prefix
-PREFIX="mycompany-argocd-backup-s3"
+PREFIX="kdiff-snapshots"
 
 # Get AWS Account Info
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -63,7 +63,4 @@ echo "  AWS_ACCESS_KEY_ID: '$(echo "${CREDENTIALS}" | jq -r '.AccessKey.AccessKe
 echo "  AWS_SECRET_ACCESS_KEY: '$(echo "${CREDENTIALS}" | jq -r '.AccessKey.SecretAccessKey')'"
 echo "  AWS_DEFAULT_REGION: ${AWS_REGION}"
 echo "  S3_BUCKET_NAME: ${BUCKET_NAME}"
-echo "  S3_UPLOAD_PREFIX: my-argo-instance/"
-echo "  ARGOCD_SERVER: argocd-server.argocd"
-echo "  ARGOCD_ADMIN_USERNAME: 'admin'"
-echo "  ARGOCD_ADMIN_PASSWORD: ''"
+echo "  S3_UPLOAD_PREFIX: my-cluster-name/"
