@@ -165,7 +165,7 @@ customCommand: []
 
 # Filegator sidecar configuration
 filegator:
-  enabled: true
+  enabled: false
   image:
     repository: filegator/filegator
     tag: "latest"

@@ -23,6 +23,32 @@ helm upgrade --install \
   kdiff-snapshots kdiff-snapshots/kdiff-snapshots
 ```
 
-<!-- TODO: below ## Configuration section should be updated periodically -->
+
+
+### From Helm Repository (LOCALLY)
+
+```bash
+git clone https://github.com/oguzhan-yilmaz/kdiff
+
+cd kdiff/kdiff-snapshots
+```
+
+```bash
+# get the values on a file
+helm show values helm-chart/ > kdiff.values.yaml
+
+vim kdiff.values.yaml
+
+# Install with (hopefully updated) values file
+helm upgrade --install \
+  --namespace kdiff \
+  --create-namespace \
+  -f kdiff.values.yaml \
+  kdiff-snapshots helm-chart/
+
+
+helm uninstall -n kdiff kdiff-snapshots
+```
+
 
 ## Configuration
