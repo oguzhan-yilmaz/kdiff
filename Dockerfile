@@ -32,10 +32,10 @@ USER steampipe
 # Add the local bin directory to PATH
 ENV PATH="/home/steampipe/.local/bin:${PATH}"
 
-COPY --chown=steampipe:steampipe kdiff-snapshots-entrypoint.sh .
-COPY --chown=steampipe:steampipe csv-script.sh .
+COPY --chown=steampipe:steampipe kdiff-snapshots-entrypoint.sh /home/steampipe/
+COPY --chown=steampipe:steampipe csv-script.sh /home/steampipe/
 
-RUN chmod +x kdiff-entrypoint.sh && chmod +x csv-script.sh
+RUN chmod +x /home/steampipe/kdiff-entrypoint.sh && chmod +x /home/steampipe/csv-script.sh
 
 
 ENTRYPOINT ["./kdiff-entrypoint.sh"]
