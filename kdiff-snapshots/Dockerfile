@@ -4,7 +4,7 @@ FROM bitnami/kubectl:latest AS kubectl
 FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:latest
 ENV DEBIAN_FRONTEND=noninteractive
 # SHELL ["/bin/bash", "-c"]
-ARG QSV_VER=8.1.1
+ENV QSV_VER="8.1.1"
 USER root
 RUN apt-get update -y \
     && apt-get install -y wget gpg \
