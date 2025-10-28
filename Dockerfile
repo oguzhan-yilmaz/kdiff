@@ -34,6 +34,7 @@ ENV PATH="/home/steampipe/.local/bin:${PATH}"
 
 COPY --chown=steampipe:steampipe *.sh .
 
-RUN chmod +x ./kdiff-snapshots-entrypoint.sh
+RUN ls && ls / && ls /home/steampipe
+RUN chmod +x kdiff-snapshots-entrypoint.sh
 
 ENTRYPOINT ["./kdiff-snapshots-entrypoint.sh"]
