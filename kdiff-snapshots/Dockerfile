@@ -27,17 +27,19 @@ RUN ln -s /usr/local/aws-cli/v2/current/bin/aws /usr/local/bin/aws
 
 COPY --from=kubectl /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/kubectl
 
-USER steampipe
 
 # Add the local bin directory to PATH
 ENV PATH="/home/steampipe/.local/bin:${PATH}"
 
-COPY kdiff-snapshots-entrypoint.sh .
-COPY csv-script.sh .
+COPY  --chown=steampipe:steampipe kdiff-snapshots-entrypoint.sh .
+COPY  --chown=steampipe:steampipe csv-script.sh .
 
 RUN ls && ls / && ls /home/steampipe
-RUN chmod +x kdiff-snapshots-entrypoint.sh
-RUN chmod +x csv-script.sh
+RUN chmod +x *.sh
+
+# RUN chmod +x kdiff-snapshots-entrypoint.sh
+# RUN chmod +x csv-script.sh
 RUN ls -la
 
+USER steampipe
 ENTRYPOINT ["./kdiff-snapshots-entrypoint.sh"]
