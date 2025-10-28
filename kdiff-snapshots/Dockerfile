@@ -24,7 +24,9 @@ RUN apt-get update -y \
 RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
         apt-get install -y qsv; \
     elif [ "$(dpkg --print-architecture)" = "arm64" ]; then \
-        wget https://github.com/dathere/qsv/releases/download/${QSV_VER}/qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip \
+        export QSV_DOWNLOAD_URL="https://github.com/dathere/qsv/releases/download/${QSV_VER}/qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip" \ 
+        && echo "QSV_DOWNLOAD_URL=$QSV_DOWNLOAD_URL" \
+        && wget "$QSV_DOWNLOAD_URL" \
         && unzip qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip \
         && mv qsv /usr/local/bin/ \
         && chmod +x /usr/local/bin/qsv \
