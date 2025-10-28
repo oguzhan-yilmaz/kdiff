@@ -4,7 +4,7 @@ FROM bitnami/kubectl:latest AS kubectl
 FROM ghcr.io/oguzhan-yilmaz/steampipe-powerpipe-kubernetes--steampipe:latest
 ENV DEBIAN_FRONTEND=noninteractive
 # SHELL ["/bin/bash", "-c"]
-
+ARG QSV_VER=8.1.1
 USER root
 RUN apt-get update -y \
     && apt-get install -y wget gpg \
@@ -16,10 +16,21 @@ RUN apt-get update -y \
         curl \
         git \
         unzip \
-        qsv \
         jq \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install qsv
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+        apt-get install -y qsv; \
+    elif [ "$(dpkg --print-architecture)" = "arm64" ]; then \
+        wget https://github.com/dathere/qsv/releases/download/${QSV_VER}/qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip \
+        && unzip qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip \
+        && mv qsv /usr/local/bin/ \
+        && chmod +x /usr/local/bin/qsv \
+        && rm qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip; \
+    fi
+RUN qsv --version
 
 # get the aws cli from it's docker image
 COPY --from=awscli --chown=steampipe:steampipe /usr/local/aws-cli /usr/local/aws-cli
