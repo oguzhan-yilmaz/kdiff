@@ -37,5 +37,7 @@ COPY csv-script.sh .
 
 RUN ls && ls / && ls /home/steampipe
 RUN chmod +x kdiff-snapshots-entrypoint.sh
+RUN chmod +x csv-script.sh
+RUN ls -la
 
 ENTRYPOINT ["./kdiff-snapshots-entrypoint.sh"]
