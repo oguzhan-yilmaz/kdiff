@@ -11,8 +11,8 @@ ENV QSV_VER="8.1.1"
 USER root
 RUN apt-get update -y \
     && apt-get install -y wget gpg \
-    && wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | gpg --dearmor -o /usr/share/keyrings/qsv-deb.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/qsv-deb.gpg] https://dathere.github.io/qsv-deb-releases ./" | tee /etc/apt/sources.list.d/qsv.list \
+    && wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | sudo gpg --dearmor -o /usr/share/keyrings/qsv-deb.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/qsv-deb.gpg] https://dathere.github.io/qsv-deb-releases ./" | sudo tee /etc/apt/sources.list.d/qsv.list \
     && apt-get update -y \
     && apt-get install -y \
         inotify-tools ca-certificates \
@@ -26,7 +26,7 @@ RUN apt-get update -y \
 RUN set -eux; \
     echo "Detected platform: ${TARGETPLATFORM}"; \
     if [ "${TARGETPLATFORM}" = "linux/amd64" ]; then \
-        apt-get install -y qsv; \
+         apt-get update -y && apt-get install -y qsv; \
     elif [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
         QSV_VER="8.1.1"; \
         QSV_DOWNLOAD_URL="https://github.com/dathere/qsv/releases/download/${QSV_VER}/qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip"; \
