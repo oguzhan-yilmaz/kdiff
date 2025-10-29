@@ -156,7 +156,7 @@ done
 (
     echo "Generating checksums for all CSV files in ${OUT_DIR}"
     cd "${OUT_DIR}"
-    find . -name "*.csv" -type f -exec sha256sum {} + > checksums.txt
+    find . -name "*.csv" -o -name "*.metadata.json" -type f -exec sha256sum {} + > checksums.txt
 )
 
 
