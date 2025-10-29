@@ -4,7 +4,8 @@ FROM bitnami/kubectl:latest AS kubectl
 
 
 # Use the official Rust image (includes Cargo)
-FROM rust:latest  # as qsvbuild
+FROM rust:latest 
+# as qsvbuild
 
 # Set the working directory
 WORKDIR /build
