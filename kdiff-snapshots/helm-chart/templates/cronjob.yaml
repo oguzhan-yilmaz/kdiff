@@ -24,6 +24,9 @@ spec:
           labels:
             {{- include "kdiff-snapshots.selectorLabels" . | nindent 12 }}
         spec:
+          {{- if .Values.hostNetwork }}
+          hostNetwork: {{ .Values.hostNetwork }}
+          {{- end }}
           {{- with .Values.imagePullSecrets }}
           imagePullSecrets:
             {{- toYaml . | nindent 12 }}
