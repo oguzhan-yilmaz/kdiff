@@ -30,14 +30,14 @@ install_qsv_amd64() {
 
     # Import GPG key and add repository
     wget -qO- https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg \
-        | sudo gpg --dearmor -o /usr/share/keyrings/qsv-deb.gpg
+        | gpg --dearmor -o /usr/share/keyrings/qsv-deb.gpg
 
     echo "deb [signed-by=/usr/share/keyrings/qsv-deb.gpg] https://dathere.github.io/qsv-deb-releases ./" \
-        | sudo tee /etc/apt/sources.list.d/qsv.list > /dev/null
+        | tee /etc/apt/sources.list.d/qsv.list > /dev/null
 
     # Update and install qsv
-    sudo apt update -y
-    sudo apt install -y qsv
+    apt update -y
+    apt install -y qsv
 
     log "qsv installation complete (amd64)."
 }

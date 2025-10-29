@@ -18,7 +18,7 @@ RUN apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install qsv depending on architecture
-COPY  --chown=steampipe:steampipe install-qsv.sh .
+COPY --chown=steampipe:steampipe install-qsv.sh .
 RUN bash install-qsv.sh
 
 # # Install qsv
