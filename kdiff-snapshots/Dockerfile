@@ -11,33 +11,15 @@ ENV QSV_VER="8.1.1"
 USER root
 RUN apt-get update -y \
     && apt-get install -y wget gpg \
-    && wget -O - https://dathere.github.io/qsv-deb-releases/qsv-deb.gpg | sudo gpg --dearmor -o /usr/share/keyrings/qsv-deb.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/qsv-deb.gpg] https://dathere.github.io/qsv-deb-releases ./" | sudo tee /etc/apt/sources.list.d/qsv.list \
-    && apt-get update -y \
     && apt-get install -y \
         inotify-tools ca-certificates \
         curl git unzip jq  \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
-
 # Install qsv depending on architecture
-RUN set -eux; \
-    echo "Detected platform: ${TARGETPLATFORM}"; \
-    if [ "${TARGETPLATFORM}" = "linux/amd64" ]; then \
-         apt-get update -y && apt-get install -y qsv; \
-    elif [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
-        QSV_VER="8.1.1"; \
-        QSV_DOWNLOAD_URL="https://github.com/dathere/qsv/releases/download/${QSV_VER}/qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip"; \
-        echo "Downloading QSV from $QSV_DOWNLOAD_URL"; \
-        wget -q "$QSV_DOWNLOAD_URL"; \
-        unzip "qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip"; \
-        ls -R; \
-        rm "qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip"; \
-    else \
-        echo "Unsupported platform: ${TARGETPLATFORM}" && exit 1; \
-    fi
+COPY  --chown=steampipe:steampipe install-qsv.sh .
+RUN bash install-qsv.sh
 
 # # Install qsv
 # RUN echo "architecture = $(dpkg --print-architecture)" \
