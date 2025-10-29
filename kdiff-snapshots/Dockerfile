@@ -33,8 +33,7 @@ RUN set -eux; \
         echo "Downloading QSV from $QSV_DOWNLOAD_URL"; \
         wget -q "$QSV_DOWNLOAD_URL"; \
         unzip "qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip"; \
-        mv qsv /usr/local/bin/; \
-        chmod +x /usr/local/bin/qsv; \
+        ls -R; \
         rm "qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip"; \
     else \
         echo "Unsupported platform: ${TARGETPLATFORM}" && exit 1; \
