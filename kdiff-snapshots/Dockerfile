@@ -23,15 +23,16 @@ RUN apt-get update -y \
 
 
 
-RUN export QSV_VER="8.1.1"
-RUN export QSV_DOWNLOAD_URL="https://github.com/dathere/qsv/releases/download/${QSV_VER}/qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip" 
-RUN echo "QSV_DOWNLOAD_URL=$QSV_DOWNLOAD_URL"
-RUN wget "$QSV_DOWNLOAD_URL"
-RUN ls -R
-RUN unzip qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip
-RUN mv qsv /usr/local/bin/
-RUN chmod +x /usr/local/bin/qsv
-RUN rm qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip
+RUN set -x \ 
+    && export QSV_VER="8.1.1" \
+    && export QSV_DOWNLOAD_URL="https://github.com/dathere/qsv/releases/download/${QSV_VER}/qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip" \
+    && echo "QSV_DOWNLOAD_URL=$QSV_DOWNLOAD_URL" \
+    && wget "$QSV_DOWNLOAD_URL" \
+    && ls -R \
+    && unzip qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip \
+    && mv qsv /usr/local/bin/ \
+    && chmod +x /usr/local/bin/qsv \
+    && rm qsv-${QSV_VER}-aarch64-unknown-linux-gnu.zip
 
 
 
