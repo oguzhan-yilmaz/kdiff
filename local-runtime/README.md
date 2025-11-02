@@ -20,16 +20,17 @@ export AWS_ENDPOINT_URL_S3=http://localhost:9000
 export AWS_ACCESS_KEY_ID=minioadmin
 export AWS_SECRET_ACCESS_KEY=minioadmin
 export AWS_DEFAULT_REGION=us-east-1
+export BUCKET_NAME=test-bucket
 
 # test minio access with aws cli
 
 # create a bucket: 
-aws s3 mb s3://test-bucket
+aws s3 mb s3://$BUCKET_NAME
 echo "text here" > test.txt
-aws s3 sync . s3://test-bucket
-# aws s3 --endpoint-url http://localhost:9000 mb s3://test-bucket
+aws s3 sync . s3://$BUCKET_NAME
+# aws s3 --endpoint-url http://localhost:9000 mb s3://$BUCKET_NAME
 
-aws s3 ls s3://test-bucket
+aws s3 ls s3://$BUCKET_NAME
 ```
 
 
