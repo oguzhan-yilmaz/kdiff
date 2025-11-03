@@ -2,7 +2,7 @@ from config import boto3_session, bucket_name
 from functools import lru_cache
 from pathlib import Path
 from io import BytesIO
-
+import json
 
 # Create an S3 client
 s3_client = boto3_session.client("s3")
@@ -54,11 +54,12 @@ def get_kdiff_snapshot_metadata_files(bucket):
     r = []
     for md_path in md_paths:
         file_obj = BytesIO()  # Create a BytesIO buffer
+        # load and read the file on memory
         s3_client.download_fileobj(bucket, str(md_path), file_obj)
         file_obj.seek(0)  # Move cursor to the beginning of the buffer
         content = file_obj.read() 
-        file_obj.seek(0)  # Move cursor to the beginning of the buffer
-        r.append({'bucket': bucket, 'filepath': str(md_path), "file_obj": file_obj, "file_content":content})
+        r.append({'bucket': bucket, 'filepath': str(md_path), "file_content":json.loads(content)})
+        del file_obj
     return r
 
 

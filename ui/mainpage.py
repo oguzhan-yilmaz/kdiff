@@ -4,11 +4,9 @@ from storage import *
 from pathlib import Path
 import json
 
-
-
-st.title("Kdiff UI")
-st.header("Connecting to S3 with st.connection")
-
+# Main page content
+st.markdown("# Main page 🎈")
+st.sidebar.markdown("# Main page 🎈")
 # print(dir(bucket))
 # print('-'*20)
 # print(dir(bucket.Tagging))
@@ -25,9 +23,10 @@ def main():
     #     print(f"found {file['Key']}")
         
     s3_snapshot_dirs = get_kdiff_snapshot_metadata_files(bucket_name)
+    
     for mf in s3_snapshot_dirs:
         # print(bucket_name, mf)
-        print(mf)
+        mf
 
 
 if __name__ == '__main__':
