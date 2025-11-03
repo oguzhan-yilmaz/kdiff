@@ -1,5 +1,7 @@
 from config import boto3_session, bucket_name
 from functools import lru_cache
+from pathlib import Path
+from io import BytesIO
 
 
 # Create an S3 client
@@ -36,8 +38,31 @@ def filter_files_by_name(bucket, filename):
     
     return matching_files
 
+def get_kdiff_snapshot_metadata_path_objs(bucket):
+    metadata_filename = 'kdiff-snapshot.metadata.json'
+    files = filter_files_by_name(bucket, metadata_filename)
+    path_objs = [ Path(f['Key']) for f in files ]
+    return path_objs
 
-def get_all_object_summaries(bucket):
+def get_kdiff_snapshot_dirs(bucket):
+    metadata_path_objs = get_kdiff_snapshot_metadata_path_objs(bucket)
+    kdiff_snapshot_dirs = [ str(mp.parent) for mp in metadata_path_objs ]
+    return kdiff_snapshot_dirs 
+
+def get_kdiff_snapshot_metadata_files(bucket):
+    md_paths = get_kdiff_snapshot_metadata_path_objs(bucket)
+    r = []
+    for md_path in md_paths:
+        file_obj = BytesIO()  # Create a BytesIO buffer
+        s3_client.download_fileobj(bucket, str(md_path), file_obj)
+        file_obj.seek(0)  # Move cursor to the beginning of the buffer
+        content = file_obj.read() 
+        file_obj.seek(0)  # Move cursor to the beginning of the buffer
+        r.append({'bucket': bucket, 'filepath': str(md_path), "file_obj": file_obj, "file_content":content})
+    return r
+
+
+def _get_all_object_summaries(bucket):
     object_summary_iterator = bucket.objects.page_size(count=250)
     _result = {
         "bucket": bucket.name

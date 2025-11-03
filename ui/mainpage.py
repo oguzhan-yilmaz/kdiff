@@ -1,6 +1,7 @@
 import streamlit as st
 from config import boto3_session
 from storage import *
+from pathlib import Path
 import json
 
 
@@ -15,19 +16,22 @@ st.header("Connecting to S3 with st.connection")
 # print(bucket.get_available_subresources())
 
 
-all_files = get_all_objects(bucket_name)
-for file in all_files:
-    print(file)
-    # print(file['Key'])
+def main():
+
+    all_files = get_all_objects(bucket_name)
+    files = filter_files_by_name(bucket_name, 'kdiff-snapshot.metadata.json')
+
+    # for file in metadata_files:
+    #     print(f"found {file['Key']}")
+        
+    s3_snapshot_dirs = get_kdiff_snapshot_metadata_files(bucket_name)
+    for mf in s3_snapshot_dirs:
+        # print(bucket_name, mf)
+        print(mf)
 
 
-
-# Usage
-files = filter_files_by_name(bucket_name, 'kdiff-snapshot-2025-11-02--11-22.tar')
-
-for file in files:
-    print(f"found {file['Key']}")
-
+if __name__ == '__main__':
+    main()
 
 # for a in bucket.objects.all():
 #     print(a)
