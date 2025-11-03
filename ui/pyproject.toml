@@ -12,5 +12,6 @@ dependencies = [
     "s3fs>=0.4.2",
     "st-files-connection>=0.1.0",
     "streamlit",
+    "streamlit-aggrid>=1.2.0.post1",
     "watchdog>=6.0.0",
 ]
