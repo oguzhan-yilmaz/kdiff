@@ -173,10 +173,16 @@ if [ "$DEBUG" = "true" ]; then
     ls -alh
 fi
 
-log_info "Uploading to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}"
+log_info "Uploading tar archive to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/tars/${DIR_TAR_NAME}"
 retry_with_backoff \
-    "aws s3 cp \"tars/$DIR_TAR_NAME\" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME}" \
+    "aws s3 cp \"tars/$DIR_TAR_NAME\" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/tars/${DIR_TAR_NAME}" \
     "Upload tar archive to S3"
+
+log_info "Uploading snapshot objects to s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_NAME}"
+retry_with_backoff \
+    "aws s3 cp \"data/$DIR_NAME\" s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_NAME} --recursive" \
+    "Upload snapshot objects to S3"
+
 
 log_info "------------*------------*------------"
 
@@ -185,7 +191,8 @@ echo "---"
 aws s3 ls s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX}
 
 log_info "Download with command:"
-log_info "    aws s3 cp s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_TAR_NAME} ."
+log_info "    aws s3 cp s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/tars/${DIR_TAR_NAME} ."
+log_info "    aws s3 cp s3://${S3_BUCKET_NAME}/${S3_UPLOAD_PREFIX%/}/${DIR_NAME} ${DIR_NAME} --recursive"
 
 # ======= CLEANUP =======
 log_info "Cleaning up temporary files..."
