@@ -230,7 +230,9 @@ EOF
 # ======= Add all file checksums as json to the kdiff-snapshot.metadata.json file =======
 kdiff_metadata_json=$(jq --argjson checksums "${checksums_json}" '. + {checksums: $checksums}'  "$metadata_file")
 log_debug "kdiff_metadata_json==$kdiff_metadata_json"
-# echo "$kdiff_metadata_json" > "$metadata_file"
+
+# save $kdiff_metadata_json
+echo "$kdiff_metadata_json" > "$metadata_file"
 log_info "kdiff_metadata_json=$kdiff_metadata_json"
 
 log_info "Created metadata file: $metadata_file"
