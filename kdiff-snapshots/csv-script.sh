@@ -93,7 +93,7 @@ fi
 
 log_debug "Found $(echo "$tables" | wc -l) tables"
 
-
+mkdir "${OUT_DIR}/_table_metadata/"
 # Process each table
 for table in $tables; do
     out_file="${OUT_DIR}/${table}.csv"
@@ -110,14 +110,13 @@ for table in $tables; do
     fi
 
     # Get table metadata
-    metadata_out_file="${OUT_DIR}/${table}.metadata.json"
+    metadata_out_file="${OUT_DIR}/_table_metadata/${table}.metadata.json"
     metadata_sql_query="SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'kubernetes' AND table_name = '$table'"
     log_debug "Fetching metadata for table: $table -- Output file: $metadata_out_file"
     if ! steampipe query --output json "$metadata_sql_query" > "$metadata_out_file" 2>/dev/null; then
         log_warning "Failed to query metadata for table $table, skipping..."
     fi
-
-    log_debug ">> Completed processing table: $table"
+    log_debug ">> Completed processing table: $table to $metadata_out_file"
 done
 
 
@@ -159,11 +158,21 @@ done
     find . -name "*.csv" -o -name "*.metadata.json" -type f -exec sha256sum {} + > checksums.txt
 )
 
+checksums_json=$(
+  cd "${OUT_DIR}" || exit 1
 
+  # Compute sha256sums for all CSV and metadata files
+  # Format: {"filename":"checksum"}
+  find . -type f \( -name "*.csv" -o -name "*.metadata.json" \) \
+    -exec sha256sum {} + |
+    awk '{print "{\"" substr($2,3) "\":\"" $1 "\"}"}' |  # remove "./" prefix from filename
+    jq -s 'add'  # merge all small JSON objects into one
+)
 
 # ------- Create .metadata.json file -------
 # Create .metadata.json file in the OUT_DIR with metadata about the snapshot
-metadata_file="${OUT_DIR}/metadata.json"
+metadata_file="${OUT_DIR}/kdiff-snapshot.metadata.json"
+log_info "metadata_file=$metadata_file"
 
 # Create metadata file with CLI versions, cluster info, and snapshot details
 
@@ -179,6 +188,7 @@ cat << EOF | tee "$metadata_file"
   "snapshotInfo": {
     "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
     "hostname": "${HOSTNAME:-}",
+    "output_directory": "${OUT_DIR}",
     "sql_limit_str": "${SQL_LIMIT_STR:-}",
     "s3_bucket_name": "${S3_BUCKET_NAME:-}",
     "s3_upload_prefix": "${S3_UPLOAD_PREFIX:-}",
@@ -187,11 +197,12 @@ cat << EOF | tee "$metadata_file"
 }
 EOF
 
-echo "Created metadata file: $metadata_file"
+kdiff_metadata_json=$(jq --argjson checksums "${checksums_json}" '. + {checksums: $checksums}'  "$metadata_file")
+log_debug "kdiff_metadata_json==$kdiff_metadata_json"
+echo "$kdiff_metadata_json" > "$metadata_file"
 
-
+log_info "Created metadata file: $metadata_file"
     
-
 log_debug "csv-script.sh completed successfully"
 
 
