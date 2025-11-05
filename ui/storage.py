@@ -58,7 +58,23 @@ def get_kdiff_snapshot_metadata_files(bucket):
         s3_client.download_fileobj(bucket, str(md_path), file_obj)
         file_obj.seek(0)  # Move cursor to the beginning of the buffer
         content = file_obj.read() 
-        r.append({'bucket': bucket, 'filepath': str(md_path), "file_content":json.loads(content)})
+        
+        
+        
+        r.append({
+            'bucket': bucket, 
+            "snapshot_dir": str(Path(md_path).parent),
+            "snapshot_name": Path(md_path).parent.name,
+            'filepath': str(md_path),
+            "metadata_json":json.loads(content)
+        })
+        
+            
+    
+    
+    
+    
+    
         del file_obj
     return r
 

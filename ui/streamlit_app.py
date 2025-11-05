@@ -1,13 +1,13 @@
 import streamlit as st
 
 # Define the pages
-main_page = st.Page("mainpage.py", title="Home")  # , icon="🎈"
-take_a_diff = st.Page("take_a_diff.py", title="Page 2", icon="❄️")
-# page_3 = st.Page("page_3.py", title="Page 3", icon="🎉")
+main_page = st.Page("pages/mainpage.py", title="Home")  # , icon="🎈"
+take_a_diff = st.Page("pages/take_a_diff.py", title="Page 2", icon="❄️")
+abc = st.Page("pages/queryparam.py", title="queryparam", icon="🎉")
 
 # Set up navigation
 # pg = st.navigation([main_page, page_2, page_3])
-pg = st.navigation([main_page, take_a_diff])
+pg = st.navigation([main_page, take_a_diff,abc])
 
 # Run the selected page
 pg.run()

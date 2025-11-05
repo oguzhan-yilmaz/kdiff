@@ -19,11 +19,11 @@ st.sidebar.markdown("## List of snapshots on remote S3")
 
 def main():
     s3_snapshot_dirs = get_kdiff_snapshot_metadata_files('test-bucket')
-
+    # print(s3_snapshot_dirs)
     snapshot_list = []
 
     for mf in s3_snapshot_dirs:
-        data =mf['file_content']
+        data =mf['metadata_json']
 
         snapshot_info = data.get("snapshotInfo", {})
         cli_versions = data.get("cliVersions", {})

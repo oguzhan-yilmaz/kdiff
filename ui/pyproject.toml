@@ -14,5 +14,6 @@ dependencies = [
     "st-files-connection>=0.1.0",
     "streamlit",
     "streamlit-aggrid>=1.2.0.post1",
+    "streamlit-calendar>=1.4.0",
     "watchdog>=6.0.0",
 ]

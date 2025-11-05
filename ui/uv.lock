@@ -1296,6 +1296,18 @@ wheels = [
 ]
 
 [[package]]
+name = "streamlit-calendar"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "streamlit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/da/d394612a18e8ee3410c088035a7b804e56c0318e0e9169a150158723910d/streamlit_calendar-1.4.0.tar.gz", hash = "sha256:47bd4fe839fdcbc7f334cb3aec0b83556558357562bb58c5a9fdfe11cd4e7b80", size = 1264452, upload-time = "2025-07-24T13:14:50.032Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/09/1b/76be5aa2aeacc34bf0022680e3e694bcdd6c812b93b122d617513ebdc9bc/streamlit_calendar-1.4.0-py3-none-any.whl", hash = "sha256:bba0fbd47c0910b8eb15fc3689d3f66a097bf26818da36a3c1737e00fe995966", size = 1276322, upload-time = "2025-07-24T13:14:48.629Z" },
+]
+
+[[package]]
 name = "tenacity"
 version = "9.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1385,6 +1397,7 @@ dependencies = [
     { name = "st-files-connection" },
     { name = "streamlit" },
     { name = "streamlit-aggrid" },
+    { name = "streamlit-calendar" },
     { name = "watchdog" },
 ]
 
@@ -1399,6 +1412,7 @@ requires-dist = [
     { name = "st-files-connection", specifier = ">=0.1.0" },
     { name = "streamlit" },
     { name = "streamlit-aggrid", specifier = ">=1.2.0.post1" },
+    { name = "streamlit-calendar", specifier = ">=1.4.0" },
     { name = "watchdog", specifier = ">=6.0.0" },
 ]
 
