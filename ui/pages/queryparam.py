@@ -73,11 +73,12 @@ def sync_kdiff_snapshot_to_local(snp_obj):
     
     # with st.status("Downloading data..."):
     #     st.write("Searching for data...")
-    aws_sync_result = run_aws_cli_sync(bucket_name, snapshot_dir, str(active_snapshot_sync_path), include_pattern='*.csv')
+    # aws_sync_result = run_aws_cli_sync(bucket_name, snapshot_dir, str(active_snapshot_sync_path), include_pattern='*.csv')
+    aws_sync_result = run_aws_cli_sync(bucket_name, snapshot_dir, str(active_snapshot_sync_path))
     if aws_sync_result:
         st.toast(f"AWS S3 download {snapshot_name} Complete", icon="🎉", duration="short")
     else:
-        st.error(f"Failed to sync AWS to Local: {bucket_name}, {snapshot_dir}, {str(active_snapshot_sync_path)}, include_pattern='*.csv'")
+        st.error(f"Failed to sync AWS to Local: {bucket_name}, {snapshot_dir}, {str(active_snapshot_sync_path)}")
 
 
 def aaaaaaa(snpA, snpB, changed_filenames):
@@ -107,7 +108,7 @@ def aaaaaaa(snpA, snpB, changed_filenames):
         _ch_filename_diff_csv
         _ch_filename_diff_csv_save_path
         # f"qsv diff --drop-equal-fields --key namespace,name --sort-columns namespace,name  {snp_A_ch_filepath} {snp_B_ch_filepath} > {_ch_filename_diff_csv_save_path}"
-        out = qsv_diff_different_files(snp_A_ch_filepath, snp_B_ch_filepath, "")
+        out = qsv_diff_different_files(snp_A_ch_filepath, snp_B_ch_filepath, _ch_filename_diff_csv_save_path)
         
         out
 def diff_two_snapshots(snpA, snpB):

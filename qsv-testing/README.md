@@ -16,9 +16,9 @@ export STEAMPIPE_CACHE=false
 http://localhost:8501/queryparam?snapshot-a=&snapshot-b=
 
 
-http://localhost:8501/queryparam?snapshot-a=kdiff-snapshot-2025-11-06--15-04&snapshot-b=kdiff-snapshot-2025-11-06--15-17
+http://localhost:8501/queryparam?snapshot-a=kdiff-snapshot-2025-11-06--15-04&snapshot-b=kdiff-snapshot-2025-11-06--20-14
 
-
+/
 
 qsv diff /Users/ogair/tmp-kdiff-snapshots-sync/snps/kdiff-snapshot-2025-11-06--15-04/kubernetes_pod.csv /Users/ogair/tmp-kdiff-snapshots-sync/snps/kdiff-snapshot-2025-11-06--15-08/kubernetes_pod.csv 
 

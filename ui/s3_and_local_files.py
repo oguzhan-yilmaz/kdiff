@@ -52,8 +52,8 @@ def run_aws_cli_sync(bucket_name, s3_folder, local_folder, include_pattern='*.cs
     except subprocess.CalledProcessError as e:
         print(f"❌ Error running AWS CLI command:")
         print(f"   Exit code: {e.returncode}")
-        if e.stdout:
-            print(f"   Output: {e.stdout}")
+        # if e.stdout:
+        #     print(f"   Output: {e.stdout}")
         if e.stderr:
             print(f"   Error: {e.stderr}")
         return False

@@ -3,8 +3,7 @@ from dataclasses import dataclass, field, make_dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Type, Optional, get_type_hints
 import dateutil.parser  # part of python-dateutil, very light dependency
-import os 
-
+from pathlib import Path
 # --- Type mapping function ---
 
 def map_data_type(sql_type: str):
@@ -95,18 +94,29 @@ def build_table_classes(schema: Dict[str, Any]) -> Dict[str, Type]:
 
 # --- Example usage ---
 
-def get_scheme_json_file():
-    with open('/Users/ogair/Projects/kdiff/tables.structure.json', 'r') as ff:
+def get_scheme_json_file(schema_json_filepath: Path):
+    with open(f"{schema_json_filepath}", 'r') as ff:
         # schema = json.load(ff)
         content = ff.read()
     return content
 
-def get_data_tables():
-    schema_json = get_scheme_json_file()
+def get_data_tables(schema_json_filepath: Path):
+    schema_json = get_scheme_json_file(schema_json_filepath)
     schema = json.loads(schema_json)
     # print(json.dumps(schema, indent=2) )
     tables = build_table_classes(schema)
     return tables
+
+
+def get_data_tables_from_multiple_schemas(schema_json_filepath_list: List[Path]) -> Dict:
+    r = {}
+    for schema_json_filepath in schema_json_filepath_list:
+        schema_json = get_scheme_json_file(schema_json_filepath)
+        schema = json.loads(schema_json)
+        # print(json.dumps(schema, indent=2) )
+        tables = build_table_classes(schema)
+        r.update(tables)
+    return r
 
 if __name__ == "__main__":
 
@@ -121,7 +131,7 @@ if __name__ == "__main__":
     #   }
     # }
     # """
-    tables = get_data_tables()
+    tables = get_data_tables('/Users/ogair/Projects/kdiff/tables.structure.json')
     print(json.dumps(tables, indent=2, default=str))
     # # Use it dynamically
     # ClusterRole = tables["kubernetes_cluster_role"]
