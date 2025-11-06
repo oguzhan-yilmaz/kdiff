@@ -2,6 +2,7 @@ from pathlib import Path
 from config import boto3_session, bucket_name
 import json
 from functools import lru_cache
+import hashlib
 
 
 # from io import BytesIO
@@ -52,3 +53,25 @@ def from_csv_get_kube_name(csv_filepath):
     if csv_path.parent.name == 'crds':
         filename = f"crds/{filename}"
     return filename
+
+
+def hash_string(string1: str, size: int = 5) -> str:
+    """
+    Generate a reproducible hash key for a pair of strings.
+    """
+    # Hash each string individually
+    hash1 = hashlib.sha256(string1.encode('utf-8')).digest()[:size]
+    
+    # Convert to hexadecimal and combine with dash
+    return f"{hash1.hex()}"
+
+def hash_snapshots_for_diff_id(string1: str, string2: str, size: int = 5) -> str:
+    """
+    Generate a reproducible hash key for a pair of strings.
+    """
+    # Hash each string individually
+    hash1 = hash_string(string1, size=size) 
+    hash2 = hash_string(string2, size=size) 
+    
+    # Convert to hexadecimal and combine with dash
+    return f"{hash1}-{hash2}"
