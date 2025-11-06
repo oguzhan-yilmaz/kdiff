@@ -127,12 +127,14 @@ for table in $tables; do
     log_debug ">> Completed processing table: $table to $metadata_out_file"
 done
 
-
-
 # ======= QUERY Custom Resource Definitions =======
 
-crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
+crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
+
+crd_group_names_sql="SELECT spec->>'group' FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
+
 crd_names=$(steampipe query --header=false --output=csv "$crd_sql")
+crd_group_names=$(steampipe query --header=false --output=csv "$crd_group_names_sql")
 CRD_OUT_DIR="$OUT_DIR/crds"
 mkdir -p "$CRD_OUT_DIR"
 
@@ -150,7 +152,7 @@ for crd_name in $crd_names; do
 
 
     # have the file get deleted if produced no results(1 line file) and continue
-    if [ $(wc -l < "$CRD_OUT_DIR/${crd_name}.csv") -lt 2 ]; then
+    if [ $(wc -l < "${CRD_OUT_DIR}/${crd_name}.csv") -lt 2 ]; then
         log_debug "$CRD_OUT_DIR/${crd_name}.csv CSV has no data (empty or only headers), removing it..."
         rm "$CRD_OUT_DIR/${crd_name}.csv"
         continue  # we also want to skip the metadata.json creation
@@ -180,8 +182,12 @@ jq -n '
     }
   )
 ' ${OUT_DIR}/_table_metadata/*.json > "$tables_metadata_file"
-gzip "$tables_metadata_file"
-log_info "Fetched all table metadata to single file: $tables_metadata_file.gz"
+# gzip "$tables_metadata_file"
+# log_info "Fetched all table metadata to single file: $tables_metadata_file.gz"
+jq 'del(.. | .columns?)' "$tables_metadata_file"
+no_columns_tables_metadata_json=$(cat "$tables_metadata_file" | jq 'del(.. | .columns?)')
+echo "$no_columns_tables_metadata_json" > "$tables_metadata_file"
+log_info "Fetched all table metadata to single file: $tables_metadata_file"
 rm -r ${OUT_DIR}/_table_metadata/*.json
 rmdir "${OUT_DIR}/_table_metadata/"
 
