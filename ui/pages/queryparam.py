@@ -2,7 +2,7 @@ from datetime import datetime
 import streamlit as st
 from storage import get_kdiff_snapshot_metadata_files
 import pandas as pd
-from config import bucket_name, active_diff_dir, local_dir_for_s3_sync
+from config import bucket_name, main_diff_dir, local_dir_for_s3_sync
 from misc import *
 from s3_and_local_files import run_aws_cli_sync
 USER_TIMEZONE = st.context.timezone
@@ -54,26 +54,6 @@ def main():
     # s3_snapshots
     snapshot_list = []
     
-def aaaaaaa(snpA, snpB):
-    st.markdown("# ejrere")
-    snpA['snapshot_dir']
-    snpB['snapshot_dir']
-    x = hash_snapshots_for_diff_id(snpA['snapshot_dir'], snpB['snapshot_dir'])
-    y = hash_snapshots_for_diff_id(snpB['snapshot_dir'], snpA['snapshot_dir'])
-    
-    x
-    st.markdown("# 323113")
-    y
-    
-    active_snp_id = hash_snapshots_for_diff_id(snpA['snapshot_dir'], snpB['snapshot_dir'])
-    active_diff_dir_path = Path(active_diff_dir)
-    active_snp_diff_path = active_diff_dir_path / active_snp_id
-    # create a tmp dir 
-    active_snp_id
-    active_diff_dir_path
-    active_snp_diff_path
-    cc = active_snp_diff_path.mkdir(parents=True, exist_ok=True) # to gen files with qsv.sh
-    cc
 
 def sync_kdiff_snapshot_to_local(snp_obj):
     st.markdown("# sync_kdiff_snapshot_to_local")
@@ -96,6 +76,38 @@ def sync_kdiff_snapshot_to_local(snp_obj):
         st.error(f"Failed to sync AWS to Local: {bucket_name}, {snapshot_dir}, {str(active_snapshot_sync_path)}, include_pattern='*.csv'")
 
 
+def aaaaaaa(snpA, snpB, changed_filenames):
+    st.markdown("# ejrere")
+    snpA['snapshot_dir']
+    snpB['snapshot_dir']
+    _diff_id = hash_snapshots_for_diff_id(snpA['snapshot_dir'], snpB['snapshot_dir'])
+
+    st.markdown("# diff id: "+_diff_id)
+    snp_A_path = Path(local_dir_for_s3_sync) / snpA['snapshot_dir']
+    snp_B_path = Path(local_dir_for_s3_sync) / snpB['snapshot_dir']
+    st.markdown("# sn path")
+
+    snp_A_path
+    snp_B_path
+    local_dir_for_s3_sync
+    _active_diff_path = Path(main_diff_dir) / _diff_id
+   
+    if not _active_diff_path.exists():
+        _active_diff_path.mkdir(parents=True, exist_ok=True) # to gen files with qsv.sh
+        # st.toast(f"Diff Folder created: {_active_diff_path} Complete", icon="", duration="short")
+        f"Diff Folder created: {_active_diff_path} Complete"
+    # create a tmp dir 
+    _active_diff_path
+    changed_filenames
+    st.markdown("### HERHEHERE")
+    for ch_filename in changed_filenames:
+        snp_A_ch_filepath = snp_A_path / ch_filename
+        snp_B_ch_filepath = snp_B_path / ch_filename
+        _ch_filename_diff_csv = f"{str(Path(ch_filename).stem)}.diff.csv"
+        _ch_filename_diff_csv_save_path = _active_diff_path / _ch_filename_diff_csv
+        _ch_filename_diff_csv
+        _ch_filename_diff_csv_save_path
+        f"qsv diff --drop-equal-fields --key namespace,name --sort-columns namespace,name  {snp_A_ch_filepath} {snp_B_ch_filepath} > {_ch_filename_diff_csv_save_path}"
 
 def diff_two_snapshots(snpA, snpB):
     st.markdown('# diff_two_snapshots')
@@ -112,10 +124,10 @@ def diff_two_snapshots(snpA, snpB):
     # # [from_csv_get_kube_name(_) for _ in changed_objects]
     
     # changed_objects
-    
-    aaaaaaa(snpA, snpB)
+    changed_filenames = changed_objects
     sync_kdiff_snapshot_to_local(snpA)
     sync_kdiff_snapshot_to_local(snpB)
+    aaaaaaa(snpA, snpB, changed_filenames)
     
     for co in changed_objects[:1]:
         co

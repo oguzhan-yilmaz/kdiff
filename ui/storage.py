@@ -70,11 +70,6 @@ def get_kdiff_snapshot_metadata_files(bucket):
         })
         
             
-    
-    
-    
-    
-    
         del file_obj
     return r
 

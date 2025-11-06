@@ -93,7 +93,7 @@ envVars:
   # Available plugins: https://hub.steampipe.io/
   INSTALL_STEAMPIPE_PLUGINS: >
     kubernetes
-  
+  STEAMPIPE_CACHE: "false"
   # AWS profile configuration (if using AWS credentials)
   # AWS_PROFILE: "default"
 
