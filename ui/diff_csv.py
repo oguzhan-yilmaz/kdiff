@@ -9,12 +9,6 @@ from s3_and_local_files import run_any_bash_command
 import json
 from schema_types import get_data_tables_from_multiple_schemas
 
-table_structure_json_path_list = [
-    Path('/Users/ogair/Projects/kdiff/tables.structure.json')
-]
-tables = get_data_tables_from_multiple_schemas(table_structure_json_path_list)
-print(json.dumps(tables, indent=2, default=str))
-
 
 
 def qsv_diff_different_files(left_file: Path, right_file: Path, save_file: Path) -> None:
@@ -33,7 +27,7 @@ def qsv_diff_different_files(left_file: Path, right_file: Path, save_file: Path)
         "diff",
         "--drop-equal-fields",
         "--key",
-        "namespace,name",
+        "uid",
         # "--sort-columns namespace,name",
         str(left_file),
         str(right_file),
@@ -41,9 +35,4 @@ def qsv_diff_different_files(left_file: Path, right_file: Path, save_file: Path)
     ])
 
     out = run_any_bash_command(cmd)
-    
-    
-    
-    st.markdown("# -----------")
-    out
     return out

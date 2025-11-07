@@ -5,7 +5,11 @@ import pandas as pd
 from config import bucket_name, main_diff_dir, local_dir_for_s3_sync
 from misc import *
 from diff_csv import qsv_diff_different_files
+from typing import List, Dict
 from s3_and_local_files import run_aws_cli_sync
+from schema_types import get_data_tables_from_multiple_schemas
+from st_aggrid import AgGrid, GridOptionsBuilder
+
 USER_TIMEZONE = st.context.timezone
 USER_LOCALE = st.context.locale
 
@@ -27,7 +31,7 @@ def main():
     _params_valid, _err_msg = ensure_query_params_are_passed(st.query_params, _require_query_params)
     
     if not _params_valid:
-        st.warning("http://localhost:8501/queryparam?snapshot-a=kdiff-snapshot-2025-11-03--23-17&snapshot-b=kdiff-snapshot-2025-11-03--23-54") # TODO Delete later
+        st.warning("http://localhost:8501/queryparam?snapshot-a=kdiff-snapshot-2025-11-07--10-24&snapshot-b=kdiff-snapshot-2025-11-07--10-28") # TODO Delete later
         st.error(f"This page requires Query Parameters. Error: {_err_msg}")
         st.stop() 
     # ------------------------------------------------------------------------
@@ -80,8 +84,17 @@ def sync_kdiff_snapshot_to_local(snp_obj):
     else:
         st.error(f"Failed to sync AWS to Local: {bucket_name}, {snapshot_dir}, {str(active_snapshot_sync_path)}")
 
+def get_data_classes(snpA, snpB):
+    table_structure_json_path_list = [
+        Path(local_dir_for_s3_sync) / snpA['snapshot_dir'] / 'tables.structure.json',
+        Path(local_dir_for_s3_sync) / snpB['snapshot_dir'] / 'tables.structure.json'
+    ]
+    tables = get_data_tables_from_multiple_schemas(table_structure_json_path_list)
+    print("-*--**-*-09889-**-*-*-*-*")
+    print(json.dumps(tables, indent=2, default=str))
+    return tables
 
-def aaaaaaa(snpA, snpB, changed_filenames):
+def generate_qsv_diff_for_file_list(snpA, snpB, changed_filenames):
     st.markdown("# ejrere")
     snpA['snapshot_dir']
     snpB['snapshot_dir']
@@ -99,18 +112,132 @@ def aaaaaaa(snpA, snpB, changed_filenames):
         f"Diff Folder created: {_active_diff_path} Complete"
     # _active_diff_path
     # changed_filenames
+    st.markdown("### DATA TABLES")
+
+    tables = get_data_classes(snpA,snpB)
+    tables
     st.markdown("### HERHEHERE")
     for ch_filename in changed_filenames:
         snp_A_ch_filepath = snp_A_path / ch_filename
         snp_B_ch_filepath = snp_B_path / ch_filename
         _ch_filename_diff_csv = f"{str(Path(ch_filename).stem)}.diff.csv"
         _ch_filename_diff_csv_save_path = _active_diff_path / _ch_filename_diff_csv
-        _ch_filename_diff_csv
-        _ch_filename_diff_csv_save_path
+        # _ch_filename_diff_csv
+        # _ch_filename_diff_csv_save_path
         # f"qsv diff --drop-equal-fields --key namespace,name --sort-columns namespace,name  {snp_A_ch_filepath} {snp_B_ch_filepath} > {_ch_filename_diff_csv_save_path}"
         out = qsv_diff_different_files(snp_A_ch_filepath, snp_B_ch_filepath, _ch_filename_diff_csv_save_path)
+        # out
         
-        out
+def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
+    """
+    Read CSV file and convert rows to dataclass instances
+    """
+    df = pd.read_csv(csv_file_path)
+    
+    # Convert each row to dataclass instance
+    # instances = []
+    # # for _, row in df.iterrows():
+    # #     instance = dataclass_type(**row.to_dict())
+    # #     instances.append(instance)
+    
+    # return instances
+    return df
+
+def test_multiline_table():
+    # Create sample data with multi-line text
+    data = {
+        'Name': ['Alice', 'Bob', 'Charlie'],
+        'Description': [
+            'Line 1\nLine 2\nLine 3',
+            'First line\nSecond line\nThird line\nFourth line',
+            'Short\nText'
+        ],
+        'Status': ['Active\nVerified', 'Pending\nReview', 'Complete']
+    }
+    
+    df = pd.DataFrame(data)
+    
+    # Set pandas to show full content
+    pd.set_option('display.max_colwidth', None)
+    pd.set_option('display.width', None)
+    
+    print(df)
+    
+    return df
+
+# Run the test
+def ccccccccccc(snpA, snpB, filenames):
+    st.markdown("## ccccccccccc")
+    # read csv files 
+    _diff_id = hash_snapshots_for_diff_id(snpA['snapshot_dir'], snpB['snapshot_dir'])
+    snp_A_path = Path(local_dir_for_s3_sync) / snpA['snapshot_dir']
+    snp_B_path = Path(local_dir_for_s3_sync) / snpB['snapshot_dir']
+    _active_diff_path = Path(main_diff_dir) / _diff_id
+
+    # _diff_id
+    # snp_A_path
+    # snp_B_path
+    # _active_diff_path
+    aaa = test_multiline_table()
+    # AgGrid(aaa, fit_columns_on_grid_load=True)
+    AgGrid(aaa, height=500, fit_columns_on_grid_load=True)
+    for filename in filenames:
+        _file_path_A = snp_A_path / filename
+        _file_path_B = snp_B_path / filename
+        if not _file_path_A.exists():
+            st.error(f"ERROR: csv file {_file_path_A} does not exists")
+        if not _file_path_B.exists():
+            st.error(f"ERROR: csv file {_file_path_B} does not exists")
+        
+        _file_path_A, _file_path_B 
+
+        # st.markdown(styled_df.to_html(escape=False), unsafe_allow_html=True)
+        pd1 = csv_to_dataclass(_file_path_A, {})
+        def pretty_json(val):
+            if pd.isna(val) or val == '':
+                return ''
+            try:
+                # Parse the JSON string first
+                obj = json.loads(val)
+                # Then format it nicely
+                return json.dumps(obj, indent=2, ensure_ascii=False)
+            except:
+                return val
+
+        pd1['tags'] = pd1['tags'].apply(pretty_json)
+        styled_df = pd1.style.set_properties(subset=['uid'], **{
+            'background-color': 'lightblue',
+            'color': 'black',
+            'font-weight': 'bold'
+        })
+        
+        
+        pd2 = csv_to_dataclass(_file_path_B, {})
+
+        tab1, tab2, tab3 = st.tabs(["Cat", "Dog", "Owl"])
+
+        with tab1:
+            # st.header("A cat")
+            styled_df
+        with tab2:
+            # st.header("A dog")
+            pd2
+        with tab3:
+            # st.header("An owl")
+            st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+        # Display with full column width (optional)
+        # pd1.set_option('display.max_colwidth', None)
+        # pd1.set_option('display.width', None)
+        # AgGrid(pd1)
+        
+
+        # AgGrid(pd2)
+        # st.markdown(pd2.to_html(escape=False), unsafe_allow_html=True)
+        
+    st.markdown("---")
+    
+    pass
+
 def diff_two_snapshots(snpA, snpB):
     st.markdown('# diff_two_snapshots')
     # snpA
@@ -136,9 +263,6 @@ def diff_two_snapshots(snpA, snpB):
     # Files unchanged (exist in both with same checksums)
     unchanged_files = {f for f in common_files if checksums_A[f] == checksums_B[f]}
 
-
-
-
     # "deleted_files", deleted_files
     # "added_files", added_files
     # "changed_files", changed_files
@@ -146,23 +270,12 @@ def diff_two_snapshots(snpA, snpB):
     "common_files", common_files
     
     
-    # filenames_A
-    # filenames_B
-    # st.markdown('### new_objects')
-    # new_objects
-    # st.markdown('### deleted_objects')
-    # deleted_objects
-    # st.markdown('### changed_objects')
-    # # [from_csv_get_kube_name(_) for _ in changed_objects]
-    
     # changed_objects
-    changed_filenames = changed_objects
     sync_kdiff_snapshot_to_local(snpA)
     sync_kdiff_snapshot_to_local(snpB)
-    aaaaaaa(snpA, snpB, common_files)
-    
-    for co in changed_objects[:1]:
-        co
+    generate_qsv_diff_for_file_list(snpA, snpB, common_files)
+    # ccccccccccc(snpA, snpB, list(common_files)[:2])
+    ccccccccccc(snpA, snpB, list(common_files))
 
     pass
 
