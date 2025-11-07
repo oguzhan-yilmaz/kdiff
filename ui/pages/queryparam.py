@@ -178,20 +178,24 @@ def ccccccccccc(snpA, snpB, filenames):
     # snp_A_path
     # snp_B_path
     # _active_diff_path
-    aaa = test_multiline_table()
+    # aaa = test_multiline_table()
     # AgGrid(aaa, fit_columns_on_grid_load=True)
-    AgGrid(aaa, height=500, fit_columns_on_grid_load=True)
+    # AgGrid(aaa, height=500, fit_columns_on_grid_load=True)
     for filename in filenames:
         _file_path_A = snp_A_path / filename
         _file_path_B = snp_B_path / filename
+        _file_path_diff_csv = _active_diff_path / f"{str(Path(filename).stem)}.diff.csv"
+        
         if not _file_path_A.exists():
             st.error(f"ERROR: csv file {_file_path_A} does not exists")
         if not _file_path_B.exists():
             st.error(f"ERROR: csv file {_file_path_B} does not exists")
-        
-        _file_path_A, _file_path_B 
+        if not _file_path_diff_csv.exists():
+            st.error(f"ERROR: csv file {_file_path_diff_csv} does not exists")
+        _file_path_A, _file_path_B, _file_path_diff_csv
 
         # st.markdown(styled_df.to_html(escape=False), unsafe_allow_html=True)
+        diff_pd = csv_to_dataclass(_file_path_diff_csv, {})
         pd1 = csv_to_dataclass(_file_path_A, {})
         def pretty_json(val):
             if pd.isna(val) or val == '':
@@ -214,17 +218,19 @@ def ccccccccccc(snpA, snpB, filenames):
         
         pd2 = csv_to_dataclass(_file_path_B, {})
 
-        tab1, tab2, tab3 = st.tabs(["Cat", "Dog", "Owl"])
+        tab1, tab2, tab3 = st.tabs(["Diff", "SnapshotA", "SnapshotB"])
 
         with tab1:
             # st.header("A cat")
-            styled_df
+            diff_pd
+
         with tab2:
             # st.header("A dog")
-            pd2
+            # styled_df
+            pd1
         with tab3:
             # st.header("An owl")
-            st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+            pd2
         # Display with full column width (optional)
         # pd1.set_option('display.max_colwidth', None)
         # pd1.set_option('display.width', None)
