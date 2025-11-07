@@ -129,7 +129,7 @@ done
 
 # ======= QUERY Custom Resource Definitions =======
 
-crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
+crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
 
 crd_group_names_sql="SELECT spec->>'group' FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
 
