@@ -115,7 +115,7 @@ def generate_qsv_diff_for_file_list(snpA, snpB, changed_filenames):
     tables = get_data_classes(snpA,snpB)
 
     r_list = [] 
-    st.markdown("### HERHEHERE")
+    # st.markdown("### HERHEHERE")
     for ch_filename in changed_filenames:
         snp_A_ch_filepath = snp_A_path / ch_filename
         snp_B_ch_filepath = snp_B_path / ch_filename
@@ -157,6 +157,8 @@ def render_common_files_as_diff_output(snpA, snpB, filenames):
     
     
     for filename in filenames:
+        st.markdown(f"### {filename}")
+        
         _file_path_A = snp_A_path / filename
         _file_path_B = snp_B_path / filename
         _file_path_diff_csv = _active_diff_path / f"{str(Path(filename).stem)}.diff.csv"
@@ -174,33 +176,44 @@ def render_common_files_as_diff_output(snpA, snpB, filenames):
         raw_diff_df = csv_to_dataclass(_file_path_diff_csv, {})
         A_df = csv_to_dataclass(_file_path_A, {})
         B_df = csv_to_dataclass(_file_path_B, {})
-        result = parse_diff_dataframe(raw_diff_df, ['uid'])
+        result = parse_diff_dataframe(raw_diff_df, A_df, B_df,['uid'])
+        
+        # if not result['added'].empty:
+        #     result['added']
+        
+        modified_df = result['modified']
+        
+        # if not modified_df.empty:
+        #     st.markdown(f"### {filename}")
+        #     "=== MODIFIED ==="
+        #     modified_df
+            
         
         # 1. 
         
         
         
-        # result
-        st.markdown(f"### {filename}")
-        if not result['modified'].empty:
-            "=== MODIFIED ==="
-            result['modified']
-        if not result['added'].empty:
-            "\n=== ADDED ==="
-            result['added']
-        if not result['removed'].empty:
-            "\n=== REMOVED ==="
-            result['removed']
-        objj[filename] = {
-            "filename": filename,
-            "filepath_A": _file_path_A,
-            "filepath_B": _file_path_B,
-            "active_diff_path": _active_diff_path,
-            "diff_df": raw_diff_df,
-            "A_df": A_df,
-            "B_df": B_df,
-            "result":result
-        }
+        # # result
+        # st.markdown(f"### {filename}")
+        # if not result['modified'].empty:
+        #     "=== MODIFIED ==="
+        #     result['modified']
+        # if not result['added'].empty:
+        #     "\n=== ADDED ==="
+        #     result['added']
+        # if not result['removed'].empty:
+        #     "\n=== REMOVED ==="
+        #     result['removed']
+        # objj[filename] = {
+        #     "filename": filename,
+        #     "filepath_A": _file_path_A,
+        #     "filepath_B": _file_path_B,
+        #     "active_diff_path": _active_diff_path,
+        #     "diff_df": raw_diff_df,
+        #     "A_df": A_df,
+        #     "B_df": B_df,
+        #     "result":result
+        # }
         
         # NEW_KIND_OF_OBJ:: added files, from B, show all values
         # DELETED_KIND_OF_OBJ:: 
@@ -215,7 +228,7 @@ def render_common_files_as_diff_output(snpA, snpB, filenames):
     return objj
     pass
 
-def parse_diff_dataframe(diff_df: pd.DataFrame, unique_cols: List[str] = ['uid']) -> Dict[str, pd.DataFrame]:
+def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[str] = ['uid']) -> Dict[str, pd.DataFrame]:
     """
     Given a DataFrame produced by `qsv diff`, group modified rows (those having both '+' and '-'
     for the same unique_cols values) into separate sub-DataFrames.
@@ -244,18 +257,18 @@ def parse_diff_dataframe(diff_df: pd.DataFrame, unique_cols: List[str] = ['uid']
     modified_keys = added_keys & removed_keys
     # "modified_keys", modified_keys
     # Build DataFrame of modified entries (both versions)
-    # modified_df = diff_df[
-    #     diff_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
-    # ].sort_values(unique_cols + ['diffresult'])
-    modified_df = (
-        diff_df[
-            diff_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
-        ]
-        .query("diffresult == '+'")              # Keep only '+' rows
-        .drop(columns='diffresult')              # Drop the diffresult column
-        .sort_values(unique_cols)                # Optional: sort by unique_cols
-        .reset_index(drop=True)                  # Optional: clean up index
-    )
+    modified_df = diff_df[
+        diff_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
+    ].sort_values(unique_cols + ['diffresult']).query("diffresult == '+'").drop(columns='diffresult').reset_index(drop=True) 
+    # modified_df = (
+    #     diff_df[
+    #         diff_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
+    #     ]
+    #     .query("diffresult == '+'")              # Keep only '+' rows
+    #     .drop(columns='diffresult')              # Drop the diffresult column
+    #     # .sort_values(unique_cols)                # Optional: sort by unique_cols
+    #     .reset_index(drop=True)                  # Optional: clean up index
+    # )
     # Filter out modified rows from added/removed sets
     added_df = added_df[
         ~added_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
@@ -263,9 +276,51 @@ def parse_diff_dataframe(diff_df: pd.DataFrame, unique_cols: List[str] = ['uid']
     removed_df = removed_df[
         ~removed_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
     ]
-    # "modified_df"
+    
+    
+    
+    added_df = added_df.drop(columns='diffresult') 
+    removed_df = removed_df.drop(columns='diffresult') 
+
+    # Style removed rows with red background
+  
+
+    # st.markdown("##### 1---1----1---11")
+    
+    # ---------------------------------------------------------------------------------------
+    if not added_df.empty: 
+        styled_added = added_df.style.set_properties(**{
+            'background-color': '#d4edda',  # light green
+            'color': 'black'
+        })
+        styled_added
+    if not removed_df.empty: 
+        styled_removed = removed_df.style.set_properties(**{
+            'background-color': '#f8d7da',  # light red
+            'color': 'black'
+        })
+        styled_removed
+    if not modified_df.empty: 
+        sytled_modified = modified_df.style.set_properties(**{
+            'background-color': "#5d55b1",  # light red
+            'color': 'black'
+        })
+        sytled_modified
+    
+    
     # modified_df
-    # print(modified_df)
+    def abccc(row):
+        st.markdown("##### roww900000")
+        # row = df.query('name == "Alice" and age == 25')
+
+
+    # df_A_extended
+    # 
+    
+    
+    # df_A
+    # df_B
+    
     return {
         "modified_keys": modified_keys,
         "modified": modified_df.reset_index(drop=True),
