@@ -1,5 +1,5 @@
 .ai_queries
-
+qsv-testing/
 
 kdiff-snapshots/tars/
 kdiff-snapshots/data/
@@ -226,3 +226,8 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 snapshot-maker/.sqlquery
+ui/TODO.md
+qsv-testing/README.md
+qsv-testing/README.md
+ui/pages/testtt.py
+qsv-testing/README.md
