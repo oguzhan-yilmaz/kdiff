@@ -35,7 +35,7 @@ log_success() {
     echo "[SUCCESS] $1"
 }
 
-required_vars=("STEAMPIPE_PLUGIN_NAME" "MAX_RETRIES" "RETRY_DELAY" "RETRY_BACKOFF_MULTIPLIER" "DEBUG")
+required_vars=("S3_BUCKET_NAME" "AWS_DEFAULT_REGION" "S3_UPLOAD_PREFIX" "STEAMPIPE_PLUGIN_NAME")
 
 for var in "${required_vars[@]}"; do
     if [ -z "${!var}" ]; then
@@ -167,7 +167,7 @@ export DIR_TAR_NAME="$DIR_NAME.tar"
 
 log_info "Running ANY-csv-script.sh to export Kubernetes resources to CSV files in data/$DIR_NAME..."
 retry_with_backoff \
-    "bash ANY-csv-script.sh --out-dir \"$DIR_NAME\" \$([ \"$DEBUG\" = \"true\" ] && echo \"--debug\")" \
+    "bash ANY-csv-script.sh --out-dir \"$DIR_NAME\" --plugin-name \"$STEAMPIPE_PLUGIN_NAME\" \$([ \"$DEBUG\" = \"true\" ] && echo \"--debug\")" \
     "Export Kubernetes resources to CSV"
 
 ls -al "data/$DIR_NAME"
@@ -201,8 +201,6 @@ log_debug "Running command: tar -cf \"tars/$DIR_TAR_NAME\" -C \"data/$STEAMPIPE_
 retry_with_backoff \
     "tar -cf \"tars/$DIR_TAR_NAME\" -C \"data/$STEAMPIPE_PLUGIN_NAME\" \"$SNP_FOLDER_NAME\"" \
     "Create tar archive tars/$DIR_TAR_NAME"
-tar: kdiff-snp-2025-11-12--16-21: Cannot stat: No such file or directory
-tar: Error exit delayed from previous errors.
 log_success "Successfully created tar archive at tars/$DIR_TAR_NAME"
 ls -alh "tars/$DIR_TAR_NAME"
 log_info "Archive contents:"
