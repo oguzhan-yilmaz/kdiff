@@ -11,6 +11,6 @@ metadata:
 {{- if eq (len $envVars) 0 }}
 data: {}
 {{- else }}
-data: {{ toYaml .Values.envVars | nindent 2 }}
+data: {{ toYaml $envVars | nindent 2 }}
 {{- end }}
 
