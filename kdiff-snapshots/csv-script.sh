@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default output directory with timestamp
-DEBUG=${DEBUG:-false}
+KDIFF_DEBUG=${KDIFF_DEBUG:-false}
 
 # SQL_LIMIT_STR is expected to be a string like "LIMIT 1000"
 SQL_LIMIT_STR=${SQL_LIMIT_STR:-""}
@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --debug)
-            DEBUG=true
+            KDIFF_DEBUG=true
             shift
             ;;
         *)
@@ -31,7 +31,7 @@ done
 
 # ======= Logging Functions =======
 log_debug() {
-    if [[ "$DEBUG" == "true" ]]; then
+    if [[ "$KDIFF_DEBUG" == "true" ]]; then
         echo "[DEBUG] $1"
     fi
 }
@@ -49,7 +49,7 @@ log_error() {
 }
 
 # ======= LET THE DOGS OUT =======
-log_debug "Script started with arguments: OUT_DIR=$OUT_DIR, DEBUG=$DEBUG, SQL_LIMIT_STR=$SQL_LIMIT_STR"
+log_debug "Script started with arguments: OUT_DIR=$OUT_DIR, KDIFF_DEBUG=$KDIFF_DEBUG, SQL_LIMIT_STR=$SQL_LIMIT_STR"
 
 # Default output directory with timestamp if not set
 OUT_DIR=${OUT_DIR:-"k8s-data-csv-$(date +%Y-%m-%d-%H%M)"}
@@ -99,6 +99,7 @@ mkdir "${OUT_DIR}/_table_metadata/"
 for table in $tables; do
     out_file="${OUT_DIR}/${table}.csv"
     sql_query="SELECT * FROM kubernetes.$table"
+    log_info "Processing: $table"
     log_debug "Processing table: $table  -- Output file: $out_file -- SQL query: $sql_query"
     if [ -z "$sql_query" ]; then
         log_warning "Empty SQL query for table $table, skipping..."
@@ -130,11 +131,11 @@ done
 # ======= QUERY Custom Resource Definitions =======
 
 crd_sql="SELECT CONCAT('kubernetes_', spec->'names'->>'singular', '_', REPLACE(spec->>'group', '.', '_')) FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
-
-crd_group_names_sql="SELECT spec->>'group' FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
-
 crd_names=$(steampipe query --header=false --output=csv "$crd_sql")
-crd_group_names=$(steampipe query --header=false --output=csv "$crd_group_names_sql")
+
+# crd_group_names_sql="SELECT spec->>'group' FROM kubernetes.kubernetes_custom_resource_definition $SQL_LIMIT_STR;"
+# crd_group_names=$(steampipe query --header=false --output=csv "$crd_group_names_sql")
+
 CRD_OUT_DIR="$OUT_DIR/crds"
 mkdir -p "$CRD_OUT_DIR"
 
@@ -184,7 +185,6 @@ jq -n '
 ' ${OUT_DIR}/_table_metadata/*.json > "$tables_metadata_file"
 # gzip "$tables_metadata_file"
 # log_info "Fetched all table metadata to single file: $tables_metadata_file.gz"
-jq 'del(.. | .columns?)' "$tables_metadata_file"
 no_columns_tables_metadata_json=$(cat "$tables_metadata_file" | jq 'del(.. | .columns?)')
 echo "$no_columns_tables_metadata_json" > "$tables_metadata_file"
 log_info "Fetched all table metadata to single file: $tables_metadata_file"
@@ -227,7 +227,8 @@ cat << EOF | tee "$metadata_file"
     "sql_limit_str": "${SQL_LIMIT_STR:-}",
     "s3_bucket_name": "${S3_BUCKET_NAME:-}",
     "s3_upload_prefix": "${S3_UPLOAD_PREFIX:-}",
-    "aws_endpoint_url_s3": "${AWS_ENDPOINT_URL_S3:-AWS S3}"
+    "aws_endpoint_url_s3": "${AWS_ENDPOINT_URL_S3:-AWS S3}",
+    "debug": "${KDIFF_DEBUG}"
   }
 }
 EOF
@@ -235,11 +236,10 @@ EOF
 
 # ======= Add all file checksums as json to the kdiff-snapshot.metadata.json file =======
 kdiff_metadata_json=$(jq --argjson checksums "${checksums_json}" '. + {checksums: $checksums}'  "$metadata_file")
-log_debug "kdiff_metadata_json==$kdiff_metadata_json"
+# log_debug "kdiff_metadata_json==$kdiff_metadata_json"
 
 # save $kdiff_metadata_json
 echo "$kdiff_metadata_json" > "$metadata_file"
-log_info "kdiff_metadata_json=$kdiff_metadata_json"
 
 log_info "Created metadata file: $metadata_file"
 

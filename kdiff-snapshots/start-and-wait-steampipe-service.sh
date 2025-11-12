@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Start steampipe service
-steampipe service start
+steampipe service start || true
 
 # Wait for healthcheck to succeed
 WAIT_TIME=0

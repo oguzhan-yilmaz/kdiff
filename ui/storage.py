@@ -1,4 +1,4 @@
-from config import boto3_session, bucket_name
+from config import boto3_session, bucket_name, snapshots_s3_prefix
 from functools import lru_cache
 from pathlib import Path
 from io import BytesIO
@@ -58,13 +58,12 @@ def get_kdiff_snapshot_metadata_files(bucket):
         s3_client.download_fileobj(bucket, str(md_path), file_obj)
         file_obj.seek(0)  # Move cursor to the beginning of the buffer
         content = file_obj.read() 
-        
-        
-        
         r.append({
             'bucket': bucket, 
             "snapshot_dir": str(Path(md_path).parent),
             "snapshot_name": Path(md_path).parent.name,
+            "remote_s3_prefix": f"s3://{bucket_name}/{snapshots_s3_prefix}/",
+            "remote_s3_uri": f"s3://{bucket_name}/{snapshots_s3_prefix}/",
             'filepath': str(md_path),
             "metadata_json":json.loads(content)
         })

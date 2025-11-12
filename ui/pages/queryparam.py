@@ -123,7 +123,6 @@ def generate_qsv_diff_for_file_list(snpA, snpB, changed_filenames):
         _ch_filename_diff_csv_save_path = _active_diff_path / _ch_filename_diff_csv
         # _ch_filename_diff_csv
         # _ch_filename_diff_csv_save_path
-        # f"qsv diff --drop-equal-fields --key namespace,name --sort-columns namespace,name  {snp_A_ch_filepath} {snp_B_ch_filepath} > {_ch_filename_diff_csv_save_path}"
         out = qsv_diff_different_files(snp_A_ch_filepath, snp_B_ch_filepath, _ch_filename_diff_csv_save_path)
         # out
         
@@ -135,16 +134,14 @@ def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
     """
     Read CSV file and convert rows to dataclass instances
     """
-    df = pd.read_csv(csv_file_path)
-    
-    # Convert each row to dataclass instance
-    # instances = []
-    # # for _, row in df.iterrows():
-    # #     instance = dataclass_type(**row.to_dict())
-    # #     instances.append(instance)
-    
-    # return instances
-    return df
+    try:
+        df = pd.read_csv(csv_file_path)
+        return df
+    except Exception as e:
+        # st.exception(e)
+        f"- not generated as it doesnt have namespace{csv_file_path}"
+        return pd.DataFrame()
+
 
 def render_common_files_as_diff_output(snpA, snpB, filenames):
     st.markdown("## ccccccccccc")
@@ -176,7 +173,7 @@ def render_common_files_as_diff_output(snpA, snpB, filenames):
         raw_diff_df = csv_to_dataclass(_file_path_diff_csv, {})
         A_df = csv_to_dataclass(_file_path_A, {})
         B_df = csv_to_dataclass(_file_path_B, {})
-        result = parse_diff_dataframe(raw_diff_df, A_df, B_df,['uid'])
+        result = parse_diff_dataframe(raw_diff_df, A_df, B_df)
         
         # if not result['added'].empty:
         #     result['added']
@@ -228,6 +225,7 @@ def render_common_files_as_diff_output(snpA, snpB, filenames):
     return objj
     pass
 
+# def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[str] = ['namespace', 'name']) -> Dict[str, pd.DataFrame]:
 def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[str] = ['uid']) -> Dict[str, pd.DataFrame]:
     """
     Given a DataFrame produced by `qsv diff`, group modified rows (those having both '+' and '-'
@@ -259,7 +257,8 @@ def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[st
     # Build DataFrame of modified entries (both versions)
     modified_df = diff_df[
         diff_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
-    ].sort_values(unique_cols + ['diffresult']).query("diffresult == '+'").drop(columns='diffresult').reset_index(drop=True) 
+    ].sort_values(unique_cols + ['diffresult'])
+    modified_df = modified_df.query("diffresult == '+'").drop(columns='diffresult')
     # modified_df = (
     #     diff_df[
     #         diff_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
@@ -284,42 +283,90 @@ def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[st
 
     # Style removed rows with red background
   
+    # ----------------------------SEPARATE DF for EACH DIFF-----------------------------------------
+
+
+
+
+
 
     # st.markdown("##### 1---1----1---11")
     
-    # ---------------------------------------------------------------------------------------
+    # ----------------------------SHOW EM-----------------------------------------
     if not added_df.empty: 
         styled_added = added_df.style.set_properties(**{
             'background-color': '#d4edda',  # light green
             'color': 'black'
         })
+        st.markdown("**Added::in-place**")
         styled_added
     if not removed_df.empty: 
         styled_removed = removed_df.style.set_properties(**{
             'background-color': '#f8d7da',  # light red
             'color': 'black'
         })
+        st.markdown("**Removed::in-place**")
         styled_removed
-    if not modified_df.empty: 
-        sytled_modified = modified_df.style.set_properties(**{
-            'background-color': "#5d55b1",  # light red
-            'color': 'black'
-        })
-        sytled_modified
+    
+    dfs=[]
+    for idx, row in modified_df.iterrows():
+        uid = row['uid']
+        original_row = df_A[df_A['uid'] == uid].iloc[0]
+        
+        # "row", row
+        # "original_row", original_row
+        new_df = pd.DataFrame([original_row, row])
+        new_df = new_df.reset_index(drop=True)  # Sets index to 0, 1
+        # for col in new_df.select_dtypes(include=['object', 'string']):
+        #     new_df[col] = new_df[col].fillna("")
+        # new_df.loc[0] = new_df.loc[0].fillna("")
+        # new_df.loc[1] = new_df.loc[1].fillna("") 
+        dfs.append(new_df)
+        
+    # if not modified_df.empty: 
+    #     sytled_modified = modified_df.style.set_properties(**{
+    #         'background-color': "#5d55b1",  # light red
+    #         'color': 'black'
+    #     })
+    #     sytled_modified
+    # def highlight_second_row(col):
+    #     styles = [''] * len(col)
+    #     styles[1] = 'background-color: #5d55b1; color: black'
+    #     return styles
+    def highlight_second_row(col):
+        styles = [''] * len(col)
+        # Check if the second row exists and has a non-empty value
+        if len(col) > 1 and col.iloc[1] not in [None, '', float('nan')]:
+            styles[1] = 'background-color: #5d55b1; color: black'
+        return styles
+    st.markdown("**Changed::in-place**")
+    for print_df in dfs:
+        if not print_df.empty: 
+            # styled_print_df = print_df.style.set_properties(
+            #     subset=pd.IndexSlice[1:1, :],  # Row index 1 (2nd row), all columns
+            #     **{
+            #         'background-color': "#5d55b1",
+            #         'color': 'black'
+            #     }
+            # )
+            styled_print_df = print_df.style.apply(highlight_second_row, axis=0)
+            
+            styled_print_df
     
     
-    # modified_df
-    def abccc(row):
-        st.markdown("##### roww900000")
-        # row = df.query('name == "Alice" and age == 25')
-
-
-    # df_A_extended
-    # 
     
     
-    # df_A
-    # df_B
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     return {
         "modified_keys": modified_keys,
@@ -372,7 +419,7 @@ def diff_two_snapshots(snpA, snpB):
     # Download the snapshot B
     sync_kdiff_snapshot_to_local(snpB)
     # Generate .diff.csv files for the two
-    generate_qsv_diff_for_file_list(snpA, snpB, common_files)
+    a = generate_qsv_diff_for_file_list(snpA, snpB, common_files)
     # ccccccccccc(snpA, snpB, list(common_files)[:2])
     
     # create 

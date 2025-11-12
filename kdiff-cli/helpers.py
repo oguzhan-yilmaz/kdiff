@@ -178,7 +178,7 @@ def qsv_diff_different_files(left: Path, right: Path, different_files: list) -> 
             "diff",
             "--drop-equal-fields",
             "--key",
-            "namespace,name",
+            "uid",
             # "--sort-columns namespace,name",
             str(left_file),
             str(right_file),

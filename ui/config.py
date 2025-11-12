@@ -12,6 +12,7 @@ aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
 aws_default_region = os.environ.get("AWS_DEFAULT_REGION") or os.environ.get("AWS_REGION") 
 bucket_name = os.environ.get("BUCKET_NAME")
+snapshots_s3_prefix = os.environ.get('S3_UPLOAD_PREFIX')
 local_dir_for_s3_sync = os.environ.get("KDIFF_SNAPSHOTS_DIR")
 main_diff_dir = os.environ.get("KDIFF_LOCAL_DIFF_DIR")
 

@@ -33,7 +33,7 @@ def run_aws_cli_sync(bucket_name, s3_folder, local_folder, include_pattern='*.cs
     if dry_run:
         cmd.append('--dryrun')
     
-    print(f"🔄 Running: {' '.join(cmd)}\n")
+    # print(f"🔄 Running: {' '.join(cmd)}\n")
     
     try:
         # Method 1: Simple run with output to console
@@ -70,7 +70,7 @@ def run_any_bash_command(command):
     Args:
         command (str): The bash command to run
     """
-    print(f"🔄 Running: {command}\n")
+    # print(f"🔄 Running: {command}\n")
     
     try:
         # Run command using shell
@@ -82,8 +82,8 @@ def run_any_bash_command(command):
             capture_output=True
         )
         
-        if result.stdout:
-            print(result.stdout)
+        # if result.stdout:
+        #     print(result.stdout)
         if result.stderr:
             print(result.stderr, file=sys.stderr)
         

@@ -134,8 +134,25 @@ retry_with_backoff \
 log_info "------------*------------*------------"
 
 # ======= BACKUP KUBERNETES STATE =======
-# snapshot kubernetes state
-export DIR_NAME="kdiff-snapshot-$(date +"%Y-%m-%d--%H-%M")"
+
+base_epoch=$(date -u +%s)
+
+if date -u -d "@$base_epoch" +"%Y-%m-%dT%H:%M:%SZ" >/dev/null 2>&1; then
+  # GNU date
+  timestamp_iso=$(date -u -d "@$base_epoch" +"%Y-%m-%dT%H:%M:%SZ")
+  timestamp_dir=$(date -u -d "@$base_epoch" +"%Y-%m-%d--%H-%M")
+else
+  # BSD date (macOS)
+  timestamp_iso=$(date -u -r "$base_epoch" +"%Y-%m-%dT%H:%M:%SZ")
+  timestamp_dir=$(date -u -r "$base_epoch" +"%Y-%m-%d--%H-%M")
+fi
+
+log_debug "timestamp_iso=$timestamp_iso"
+log_debug "timestamp_dir=$timestamp_dir"
+
+
+# timestamp=$(date +"%Y-%m-%d--%H-%M")
+export DIR_NAME="kdiff-snapshot-$timestamp_dir"
 export DIR_TAR_NAME="$DIR_NAME.tar"
 
 log_info "Running csv-script.sh to export Kubernetes resources to CSV files in data/$DIR_NAME..."
@@ -145,6 +162,27 @@ retry_with_backoff \
 
 ls -al "data/$DIR_NAME"
 log_info "------------*------------*------------"
+
+
+
+
+metadata_file="data/${DIR_NAME}/kdiff-snapshot.metadata.json"
+extra_metadata=$(cat <<EOF
+{
+  "DIR_NAME": "${DIR_NAME}",
+  "S3_UPLOAD_PREFIX": "${S3_UPLOAD_PREFIX}",
+  "timestamp_iso": "$timestamp_iso",
+  "timestamp_dir": "$timestamp_dir",
+  "added_from": "entrypoint bash script"
+}
+EOF
+)
+# jq . "$extra_metadata" >/dev/null && echo "extra_metadata valid JSON" || echo "extra_metadata invalid JSON"
+new_metadata_json=$(jq --argjson extra "$extra_metadata" '.snapshotInfo += $extra' "$metadata_file")
+# jq . "$new_metadata_json" >/dev/null && echo "new_metadata_json valid JSON" || echo "new_metadata_json invalid JSON"
+
+echo "$new_metadata_json" > "$metadata_file"
+log_info "Updated snapshotInfo on metadata file..."
 
 mkdir -p tars/
 # tar the snapshot

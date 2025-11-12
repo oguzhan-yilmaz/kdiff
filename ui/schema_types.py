@@ -135,8 +135,8 @@ if __name__ == "__main__":
     print(json.dumps(tables, indent=2, default=str))
     # # Use it dynamically
     # ClusterRole = tables["kubernetes_cluster_role"]
-    t = tables['kubernetes_pod']
-    print(dir(t))
-    print('----')
-    print(t.__class__)
+    # t = tables['kubernetes_pod']
+    # print(dir(t))
+    # print('----')
+    # print(t.__class__)
     # print(t.__dict__)
