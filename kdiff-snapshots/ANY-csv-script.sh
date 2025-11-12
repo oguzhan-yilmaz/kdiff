@@ -104,7 +104,7 @@ for table in $tables; do
     out_file="${OUT_DIR}/${table}.csv"
     sql_query="SELECT * FROM ${STEAMPIPE_PLUGIN_NAME}.$table"
     log_info "Processing: $table"
-    log_debug "Processing table: $table  -- Output file: $out_file -- SQL query: $sql_query"
+    log_debug "Processing table: $table -- SQL query: $sql_query"
     if [ -z "$sql_query" ]; then
         log_warning "Empty SQL query for table $table, skipping..."
         continue
@@ -177,81 +177,81 @@ done
 # done
 
 
-# # ======= Fetched all table metadata to single file =======
-# tables_metadata_file="${OUT_DIR}/tables.structure.json"
-# jq -n '
-#   reduce inputs as $item (
-#     {}; 
-#     . + {
-#       (input_filename | split("/")[-1] | sub(".metadata.json$"; "")): $item
-#     }
-#   )
-# ' ${OUT_DIR}/_table_metadata/*.json > "$tables_metadata_file"
-# # gzip "$tables_metadata_file"
-# # log_info "Fetched all table metadata to single file: $tables_metadata_file.gz"
-# no_columns_tables_metadata_json=$(cat "$tables_metadata_file" | jq 'del(.. | .columns?)')
-# echo "$no_columns_tables_metadata_json" > "$tables_metadata_file"
-# log_info "Fetched all table metadata to single file: $tables_metadata_file"
-# rm -r ${OUT_DIR}/_table_metadata/*.json
-# rmdir "${OUT_DIR}/_table_metadata/"
+# ======= Fetched all table metadata to single file =======
+tables_metadata_file="${OUT_DIR}/tables.structure.json"
+jq -n '
+  reduce inputs as $item (
+    {}; 
+    . + {
+      (input_filename | split("/")[-1] | sub(".metadata.json$"; "")): $item
+    }
+  )
+' ${OUT_DIR}/_table_metadata/*.json > "$tables_metadata_file"
+# gzip "$tables_metadata_file"
+# log_info "Fetched all table metadata to single file: $tables_metadata_file.gz"
+no_columns_tables_metadata_json=$(cat "$tables_metadata_file" | jq 'del(.. | .columns?)')
+echo "$no_columns_tables_metadata_json" > "$tables_metadata_file"
+log_info "Fetched all table metadata to single file: $tables_metadata_file"
+rm -r ${OUT_DIR}/_table_metadata/*.json
+rmdir "${OUT_DIR}/_table_metadata/"
 
-# # ======= Generate checksums for all CSV files =======
-# (
-#     log_info "Generating checksums for all CSV files in ${OUT_DIR}"
-#     cd "${OUT_DIR}"
-#     find . -name "*.csv" -o -name "*.metadata.json" -type f -exec sha256sum {} + > checksums.txt
-# )
+# ======= Generate checksums for all CSV files =======
+(
+    log_info "Generating checksums for all CSV files in ${OUT_DIR}"
+    cd "${OUT_DIR}"
+    find . -name "*.csv" -o -name "*.metadata.json" -type f -exec sha256sum {} + > checksums.txt
+)
 
-# checksums_json=$(
-#   # Compute sha256sums for all CSV and metadata files
-#   # Format: {"filename":"checksum"}
-#   cd "${OUT_DIR}" || exit 1
-#   find . -type f \( -name "*.csv" -o -name "*.metadata.json" \) \
-#     -exec sha256sum {} + |
-#     awk '{print "{\"" substr($2,3) "\":\"" $1 "\"}"}' |  # remove "./" prefix from filename
-#     jq -s 'add'  # merge all small JSON objects into one
-# )
-# # ======= Create kdiff-snapshot.metadata.json file =======
-# metadata_file="${OUT_DIR}/kdiff-snapshot.metadata.json"
+checksums_json=$(
+  # Compute sha256sums for all CSV and metadata files
+  # Format: {"filename":"checksum"}
+  cd "${OUT_DIR}" || exit 1
+  find . -type f \( -name "*.csv" -o -name "*.metadata.json" \) \
+    -exec sha256sum {} + |
+    awk '{print "{\"" substr($2,3) "\":\"" $1 "\"}"}' |  # remove "./" prefix from filename
+    jq -s 'add'  # merge all small JSON objects into one
+)
+# ======= Create kdiff-snapshot.metadata.json file =======
+metadata_file="${OUT_DIR}/kdiff-snapshot.metadata.json"
 
-# # ======= Create metadata file with CLI versions, cluster info, and snapshot details =======
-# cat << EOF | tee "$metadata_file"
-# {
-#   "cliVersions": {
-#     "kubectl": $(kubectl version --client -o json 2>/dev/null | jq '.clientVersion.gitVersion' || echo '""'),
-#     "aws": "$(aws --version 2>&1)",
-#     "qsv": "$(qsv --version 2>&1)", 
-#     "jq": "$(jq --version 2>&1)",
-#     "steampipe": "$(steampipe --version 2>&1)"
-#   },
-#   "snapshotInfo": {
-#     "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-#     "hostname": "${HOSTNAME:-}",
-#     "output_directory": "${OUT_DIR}",
-#     "sql_limit_str": "${SQL_LIMIT_STR:-}",
-#     "s3_bucket_name": "${S3_BUCKET_NAME:-}",
-#     "s3_upload_prefix": "${S3_UPLOAD_PREFIX:-}",
-#     "aws_endpoint_url_s3": "${AWS_ENDPOINT_URL_S3:-AWS S3}",
-#     "debug": "${KDIFF_DEBUG}"
-#   }
-# }
-# EOF
-
-
-# # ======= Add all file checksums as json to the kdiff-snapshot.metadata.json file =======
-# kdiff_metadata_json=$(jq --argjson checksums "${checksums_json}" '. + {checksums: $checksums}'  "$metadata_file")
-# # log_debug "kdiff_metadata_json==$kdiff_metadata_json"
-
-# # save $kdiff_metadata_json
-# echo "$kdiff_metadata_json" > "$metadata_file"
-
-# log_info "Created metadata file: $metadata_file"
+# ======= Create metadata file with CLI versions, cluster info, and snapshot details =======
+cat << EOF | tee "$metadata_file"
+{
+  "cliVersions": {
+    "kubectl": $(kubectl version --client -o json 2>/dev/null | jq '.clientVersion.gitVersion' || echo '""'),
+    "aws": "$(aws --version 2>&1)",
+    "qsv": "$(qsv --version 2>&1)", 
+    "jq": "$(jq --version 2>&1)",
+    "steampipe": "$(steampipe --version 2>&1)"
+  },
+  "snapshotInfo": {
+    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "hostname": "${HOSTNAME:-}",
+    "output_directory": "${OUT_DIR}",
+    "sql_limit_str": "${SQL_LIMIT_STR:-}",
+    "s3_bucket_name": "${S3_BUCKET_NAME:-}",
+    "s3_upload_prefix": "${S3_UPLOAD_PREFIX:-}",
+    "aws_endpoint_url_s3": "${AWS_ENDPOINT_URL_S3:-AWS S3}",
+    "debug": "${KDIFF_DEBUG}"
+  }
+}
+EOF
 
 
+# ======= Add all file checksums as json to the kdiff-snapshot.metadata.json file =======
+kdiff_metadata_json=$(jq --argjson checksums "${checksums_json}" '. + {checksums: $checksums}'  "$metadata_file")
+# log_debug "kdiff_metadata_json==$kdiff_metadata_json"
+
+# save $kdiff_metadata_json
+echo "$kdiff_metadata_json" > "$metadata_file"
+
+log_info "Created metadata file: $metadata_file"
 
 
-# # ======= Clean up and Exit =======
 
-# log_debug "csv-script.sh completed successfully"
+
+# ======= Clean up and Exit =======
+
+log_debug "csv-script.sh completed successfully"
 
 

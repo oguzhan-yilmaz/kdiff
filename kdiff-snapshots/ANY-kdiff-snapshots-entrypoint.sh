@@ -165,7 +165,7 @@ export SNP_FOLDER_NAME="kdiff-snp-${timestamp_dir}"
 export DIR_NAME="${STEAMPIPE_PLUGIN_NAME}/${SNP_FOLDER_NAME}"
 export DIR_TAR_NAME="$DIR_NAME.tar"
 
-log_info "Running ANY-csv-script.sh to export Kubernetes resources to CSV files in data/$DIR_NAME..."
+log_info "Running ANY-csv-script.sh to export Kubernetes resources to CSV files in data/$DIR_NAME"
 retry_with_backoff \
     "bash ANY-csv-script.sh --out-dir \"$DIR_NAME\" --plugin-name \"$STEAMPIPE_PLUGIN_NAME\" \$([ \"$DEBUG\" = \"true\" ] && echo \"--debug\")" \
     "Export Kubernetes resources to CSV"
