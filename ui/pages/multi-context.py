@@ -4,7 +4,7 @@ st.set_page_config(layout="wide")
 
 from typing import List, DefaultDict, Dict
 from datetime import datetime
-from config import boto3_session, bucket_name
+from config import boto3_session, bucket_name, ui_config
 from storage import *
 from pathlib import Path
 import json
@@ -15,6 +15,7 @@ selected_snapshot = None
 sidebar_plugin_param = None
 selected_date = None
 selected_time = None
+row_height_slider = None
 # --------- / init params ---------
 
 s3_remote_available_plugins = list_folders(bucket_name, 'snps')
@@ -26,14 +27,24 @@ sidebar_plugin_param = st.sidebar.radio(
 
 
 
-popover = st.popover("Filter items")
-red = popover.checkbox("Show red items.", True)
-blue = popover.checkbox("Show blue items.", True)
-
-if red:
-    st.write(":red[This is a red item.]")
-if blue:
-    st.write(":blue[This is a blue item.]")
+popover = st.popover("View Options (row height, etc..)")
+row_height_slider = popover.slider("Row Height", 10, 120, 20, key="row_height")
+_min_table_height = 300
+table_height_slider = popover.slider("Table Height", _min_table_height, 2000, _min_table_height, key="table_height")
+if table_height_slider == _min_table_height:
+    table_height_slider = 'auto'
+    
+# _min_table_width = 300
+# table_width_slider = popover.slider("Table width", _min_table_width, 2000, _min_table_width, key="table_width")
+# if table_width_slider == _min_table_width:
+#     table_width_slider = 'stretch'
+# red = popover.checkbox("Show red items.", True)
+# blue = popover.checkbox("Show blue items.", True)
+# st.write("I'm ", row_height_slider, "years old")
+# if red:
+#     st.write(":red[This is a red item.]")
+# if blue:
+#     st.write(":blue[This is a blue item.]")
 
 
 
@@ -87,6 +98,7 @@ def set_sidebar_params():
     selected_time = st.sidebar.selectbox(
         "Select a snapshot time",
         options=time_options,
+        key="selected_time"
     )
 
     # --- Find the selected snapshot row ---
@@ -96,12 +108,11 @@ def set_sidebar_params():
 
 selected_snapshot = set_sidebar_params()
 
-on = st.sidebar.toggle("Activate feature")
+# on = st.sidebar.toggle("Activate feature")
 
-if on:
-    st.write("Feature activated!")
-# s3_snapshots_df
-# selected_snapshot
+# if on:
+#     st.write("Feature activated!")
+
 
 def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
     """
@@ -135,17 +146,61 @@ def show_selected_snapshot_tables(snapshot: pd.DataFrame):
         format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
     )
     
+    r = {}
     for filename in selected_filenames:
         _file_path = snp_path / filename
         A_df = csv_to_dataclass(_file_path, {})
         if not A_df.empty:
-            st.markdown(f"###### {filename}")
-            A_df
+            
+            plugin_name = sidebar_plugin_param
+            table_name = filename.replace(f"{plugin_name}_", "").replace(".csv", "")
+            ui_config.get('plugins', {}).get(plugin_name, {}).get('tables', {})
+            plugins_config = ui_config.get('plugins', {})
+            _default_hide_cols = plugins_config.get('_default', {}).get('hide_columns', [])
+            table_config = plugins_config.get(plugin_name, {}).get(table_name, {})
+            hide_columns = table_config.get('hide_columns', [])
+            hide_columns.extend(_default_hide_cols)
+            # table_config
+            processed_df = A_df
+            if table_config:
+                if hide_columns:
+                    processed_df = A_df.drop(columns=hide_columns, errors='ignore')
+
+                show_first_cols = table_config.get('show_first', [])
+                
+                all_cols = list(processed_df.columns)
+                show_first_cols = [c for c in show_first_cols if c in all_cols]
+
+                if show_first_cols:
+                    display_cols = show_first_cols
+                    remaining_cols = [c for c in all_cols if c not in show_first_cols]
+                    display_cols.extend(remaining_cols)
+                    processed_df = processed_df[display_cols]
+
+            r[filename] = {
+                'filepath': _file_path,
+                'filename': filename,
+                'dataframe': A_df,
+                'tablename': table_name,
+            }
 
     # selected_filenames
     snapshot_path = Path(local_dir_for_s3_sync) / snapshot_dict['snapshot_dir']
-
+    return r
     pass
 
-show_selected_snapshot_tables(selected_snapshot)
-# show tables
+snapshot_dataframe_list = show_selected_snapshot_tables(selected_snapshot)
+for snp_df_item in snapshot_dataframe_list.values():
+    # snp_df_item
+    table_name = snp_df_item['tablename']
+    snp_df = snp_df_item['dataframe']
+    st.markdown(f"###### {table_name}")
+    st.dataframe(
+        snp_df,
+        row_height=row_height_slider,
+        height=table_height_slider,
+        # width='stretch',
+        # width=table_width_slider,
+    )
+
+# snapshot_dataframes

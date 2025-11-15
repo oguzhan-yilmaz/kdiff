@@ -1,3 +1,4 @@
+import yaml
 import boto3
 import os
 from dotenv import load_dotenv
@@ -25,3 +26,8 @@ s3_client_args = {
 
 # aws_access_key_id=None, aws_secret_access_key=None, aws_session_token=None, region_name=None, botocore_session=None, profile_name=None, aws_account_id=None
 boto3_session = boto3.session.Session(**s3_client_args)
+
+ui_config = {}
+with open('config.yaml', 'r') as f:
+    ui_config = yaml.safe_load(f)
+
