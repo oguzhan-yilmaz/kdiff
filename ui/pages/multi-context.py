@@ -27,7 +27,7 @@ sidebar_plugin_param = st.sidebar.radio(
 
 
 
-popover = st.popover("View Options (row height, etc..)")
+popover = st.popover(":rainbow[View Options (row height, etc..)]")
 row_height_slider = popover.slider("Row Height", 10, 120, 20, key="row_height")
 _min_table_height = 300
 table_height_slider = popover.slider("Table Height", _min_table_height, 2000, _min_table_height, key="table_height")
