@@ -231,3 +231,5 @@ qsv-testing/README.md
 qsv-testing/README.md
 ui/pages/testtt.py
 qsv-testing/README.md
+kdiff-snapshots/inflate.yml
+kdiff-snapshots/a.yaml

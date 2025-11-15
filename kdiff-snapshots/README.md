@@ -1,3 +1,17 @@
+
+
+
+
+
+
+
+
+steampipe query "select * from steampipe_plugin_column where plugin='hub.steampipe.io/plugins/turbot/aws@latest'"
+
+select * from steampipe_plugin_column where plugin='hub.steampipe.io/plugins/turbot/aws@latest'
+
+
+
 # kdiff-snapshots Helm Chart
 
 A Helm chart for deploying kdiff-snapshots, a Kubernetes-native solution for generating comprehensive CSV snapshots of your Kubernetes cluster data using Steampipe.
