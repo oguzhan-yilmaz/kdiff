@@ -94,6 +94,36 @@ def set_sidebar_params():
 
 selected_snapshot = set_sidebar_params()
 
+col1, col2 = st.columns([3, 2])
+checksums = selected_snapshot['checksums']
+filenames = set(checksums.keys())
+
+with col1:
+    # st.header("A cat")
+    selected_filenames = st.multiselect(
+        "Select filenames?",
+        filenames,
+        default=filenames,
+        # width="stretch",
+        # width=600,
+        format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
+    )
+
+        
+
+if selected_snapshot.get('dividers', False):
+    dividers = selected_snapshot.get('dividers')
+    st.markdown('#### dividers found')
+    connection_values = dividers['sp_connection_name']
+    
+    col2_selection = col2.radio(
+        'Connection',
+        options=connection_values,
+        # key=inp_param_name,
+        # default=connection_values[0],
+        # format_func=lambda option: option_map[option],
+        # selection_mode="single",
+    )
 transpose_on = st.sidebar.toggle("Transpose Tables")
 
 if transpose_on:
@@ -119,28 +149,34 @@ def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
 def aaaaaa(dataframe, filename, filepath, plugin_name, table_name):
     # ui_config.get('plugins', {}).get(plugin_name, {})
     plugins_config = ui_config.get('plugins', {})
-    _default_hide_cols = plugins_config.get('_default', {}).get('hide_columns', [])
-    table_config = plugins_config.get(plugin_name, {}).get('tables', {}).get(table_name, {})
+    current_plugin_conf = plugins_config.get(plugin_name, {})
+    _default_hide_cols = current_plugin_conf.get('_default', {}).get('hide_columns', [])
+    table_config = current_plugin_conf.get('tables', {}).get(table_name, {})
+    divide_columns = current_plugin_conf.get('divide_columns', {})
     hide_columns = table_config.get('hide_columns', [])
     hide_columns.extend(_default_hide_cols)
+    # hide_columns
     # table_config
-    processed_df = dataframe
+
     if table_config:
         if hide_columns:
-            processed_df = dataframe.drop(columns=hide_columns, errors='ignore')
+            dataframe = dataframe.drop(columns=hide_columns, errors='ignore')
 
         show_first_cols = table_config.get('show_first', [])
         
-        all_cols = list(processed_df.columns)
+        all_cols = list(dataframe.columns)
         show_first_cols = [c for c in show_first_cols if c in all_cols]
 
         if show_first_cols:
             display_cols = show_first_cols
             remaining_cols = [c for c in all_cols if c not in show_first_cols]
             display_cols.extend(remaining_cols)
-            processed_df = processed_df[display_cols]
+            dataframe = dataframe[display_cols]
+            
+
     # dataframe.columns.name =  # label above columns
-    dataframe.index.name = sidebar_plugin_param + '/' + table_name 
+    # dataframe.index.name = sidebar_plugin_param + '/' + table_name 
+    # divide_columns
     
     if transpose_on:
         dataframe = dataframe.T
@@ -167,42 +203,55 @@ def show_selected_snapshot_tables(snapshot: pd.DataFrame):
     filenames = set(checksums.keys())
     
 
-    col1, col2 = st.columns([3, 2])
 
-    with col1:
-        # st.header("A cat")
-        selected_filenames = st.multiselect(
-            "Select filenames?",
-            filenames,
-            default=filenames,
-            # width="stretch",
-            # width=600,
-            format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
-        )
-        # selected_filenames = st.pills(
-        #     "Select filenames?",
-        #     filenames,
-        #     default=filenames,
-        #     # width="stretch",
-        #     selection_mode="multi", 
-        #     # width=600,
-        #     # key="23223",
-        #     format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
-        # )    
-    with col2:
-        pass
-        # st.header("A dog")
-
+    plugin_name = sidebar_plugin_param
+    plugins_config = ui_config.get('plugins', {})
+    current_plugin_conf = plugins_config.get(plugin_name, {})
+    divide_columns = current_plugin_conf.get('divide_columns', [])
+    # _default_hide_cols = current_plugin_conf.get('_default', {}).get('hide_columns', [])
+    # table_config = current_plugin_conf.get('tables', {}).get(table_name, {})
+    # hide_columns = table_config.get('hide_columns', [])
+    # hide_columns.extend(_default_hide_cols)
     r = []
     for filename in selected_filenames:
         _file_path = snp_path / filename
-        plugin_name = sidebar_plugin_param
         table_name = filename.replace(f"{plugin_name}_", "").replace(".csv", "")
         dataframe = csv_to_dataclass(_file_path, {})
         if not dataframe.empty:
             x = aaaaaa(dataframe, filename, _file_path, plugin_name, table_name)
             r.append(x)
-
+    # -------------------------------------
+    # r
+    # input_params = {}
+    # # divide_columns
+    # bbb = pd.concat([
+    #     _['dataframe'][divide_columns]
+    #     for _ in r
+    #     if not _['dataframe'].empty
+    # ])
+    # # bbb 
+    # for div_col in divide_columns:
+    #     dataframe[div_col]
+    #     x = bbb[div_col].unique().tolist()
+    #     # st.write(x)
+    #     input_params[div_col] = x
+    # # st.write(input_params)
+    # print(input_params)
+    
+    # pillz={}
+    # for inp_param_name, inp_param_values in input_params.items():
+    #     col2_selection = col2.pills(
+    #         inp_param_name,
+    #         options=inp_param_values,
+    #         key=inp_param_name,
+    #         default=inp_param_values[0],
+    #         # format_func=lambda option: option_map[option],
+    #         selection_mode="single",
+    #     )
+    #     pillz[inp_param_name]=col2_selection
+    
+    
+    
     return r
 
 snapshot_dataframe_list = show_selected_snapshot_tables(selected_snapshot)
@@ -211,12 +260,11 @@ for snp_df_item in snapshot_dataframe_list:
     table_name = snp_df_item['tablename']
     snp_df = snp_df_item['dataframe']
     st.markdown(f"###### {table_name}")
-    
-    
+    # snp_df.style.format(lambda x: json.dumps(x, indent=2) if isinstance(x, (list, dict)) else x)
     st.dataframe(
         snp_df,
         row_height=row_height_slider,
-        height=table_height_slider if (int(table_height_slider) / row_height_slider) < len(snp_df) else 'auto',
+        height=table_height_slider if (table_height_slider / row_height_slider) < len(snp_df) else 'auto',
         # width='stretch',
         # width=table_width_slider,
     )
