@@ -29,15 +29,7 @@ sidebar_plugin_param = st.sidebar.radio(
 
 popover = st.popover(":rainbow[View Options (row height, etc..)]", icon=":material/settings:",)  #  type='primary'
 row_height_slider = popover.slider("Row Height", 10, 120, 20, key="row_height")
-_min_table_height = 300
-table_height_slider = popover.slider("Table Height", _min_table_height, 2000, _min_table_height, key="table_height")
-if table_height_slider == _min_table_height:
-    table_height_slider = 'auto'
-    
-# _min_table_width = 300
-# table_width_slider = popover.slider("Table width", _min_table_width, 2000, _min_table_width, key="table_width")
-# if table_width_slider == _min_table_width:
-#     table_width_slider = 'stretch'
+table_height_slider = popover.slider("Table Height", 300, 2000, 300, key="table_height")
 # red = popover.checkbox("Show red items.", True)
 # blue = popover.checkbox("Show blue items.", True)
 # st.write("I'm ", row_height_slider, "years old")
@@ -102,10 +94,10 @@ def set_sidebar_params():
 
 selected_snapshot = set_sidebar_params()
 
-# on = st.sidebar.toggle("Activate feature")
+transpose_on = st.sidebar.toggle("Transpose Tables")
 
-# if on:
-#     st.write("Feature activated!")
+if transpose_on:
+    st.write("transpose_on Feature activated!")
 
 
 def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
@@ -125,10 +117,10 @@ def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
 
 
 def aaaaaa(dataframe, filename, filepath, plugin_name, table_name):
-    ui_config.get('plugins', {}).get(plugin_name, {}).get('tables', {})
+    # ui_config.get('plugins', {}).get(plugin_name, {})
     plugins_config = ui_config.get('plugins', {})
     _default_hide_cols = plugins_config.get('_default', {}).get('hide_columns', [])
-    table_config = plugins_config.get(plugin_name, {}).get(table_name, {})
+    table_config = plugins_config.get(plugin_name, {}).get('tables', {}).get(table_name, {})
     hide_columns = table_config.get('hide_columns', [])
     hide_columns.extend(_default_hide_cols)
     # table_config
@@ -149,6 +141,10 @@ def aaaaaa(dataframe, filename, filepath, plugin_name, table_name):
             processed_df = processed_df[display_cols]
     # dataframe.columns.name =  # label above columns
     dataframe.index.name = sidebar_plugin_param + '/' + table_name 
+    
+    if transpose_on:
+        dataframe = dataframe.T
+
     r = {
         'filepath': filepath,
         'filename': filename,
@@ -215,10 +211,12 @@ for snp_df_item in snapshot_dataframe_list:
     table_name = snp_df_item['tablename']
     snp_df = snp_df_item['dataframe']
     st.markdown(f"###### {table_name}")
+    
+    
     st.dataframe(
         snp_df,
         row_height=row_height_slider,
-        height=table_height_slider,
+        height=table_height_slider if (int(table_height_slider) / row_height_slider) < len(snp_df) else 'auto',
         # width='stretch',
         # width=table_width_slider,
     )

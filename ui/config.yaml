@@ -10,31 +10,34 @@ plugins:
         hide_columns: [id, ]
 
   docker:
-    container:
-      unique_columns: [id, ]
-      show_first: [names, image, state, status, command]
-      # hide_columns: [id, ]
-    volume:
-      unique_columns: [name, ]
-      show_first: [name, mountpoint, labels, driver]
-    network:
-      unique_columns: [id, ]  
-      show_first: [name, driver, labels, options, scope, created, ]
-    image:
-      unique_columns: [id, ]  
-      show_first: [repo_tags, size, labels, ]
-    info:
-      unique_columns: [id, ]  
-      show_first: [architecture, containers, containers_running, containers_stopped, containers_paused]
-      # hide_columns: [id, ]
+    tables:
+      container:
+        unique_columns: [id, ]
+        show_first: [names, image, state, status, command]
+        # hide_columns: [id, ]
+      volume:
+        unique_columns: [name, ]
+        show_first: [name, mountpoint, labels, driver]
+      network:
+        unique_columns: [id, ]  
+        show_first: [name, driver, labels, options, scope, created, ]
+      image:
+        unique_columns: [id, ]  
+        show_first: [repo_tags, size, labels, ]
+      info:
+        unique_columns: [id, ]  
+        show_first: [architecture, containers, containers_running, containers_stopped, containers_paused]
+        # hide_columns: [id, ]
   kubernetes:
     tables:
-      unique_columns: [uid, ]
-      show_first: [uid, ]
-      hide_columns: [uid, ]
+      node:
+        unique_columns: [uid, ]
+        show_first: [uid, ]
+        hide_columns: [uid, ]
                 
   hackernews:
     tables:
-      unique_columns: [id, ]
-      show_first: [id, ]
-      hide_columns: [id, ]
+      post:
+        unique_columns: [id, ]
+        show_first: [id, ]
+        hide_columns: [id, ]
