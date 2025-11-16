@@ -52,13 +52,7 @@ s3_snapshots = get_kdiff_snapshot_metadata_files_for_plugin(bucket_name, sidebar
 s3_snapshots_df = pd.DataFrame(s3_snapshots)
 # s3_snapshots_df
 # print(json.dumps(s3_snapshots, indent=2, default=str))
-_conf = {
-    "pluginname": {
-        "sidebar": {
-            
-        }
-    }
-}
+
 
 
 def set_sidebar_params():
@@ -126,6 +120,45 @@ def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
         f"- not generated as it doesnt have namespace{csv_file_path}"
         return pd.DataFrame()
 
+
+
+
+
+def aaaaaa(dataframe, filename, filepath, plugin_name, table_name):
+    ui_config.get('plugins', {}).get(plugin_name, {}).get('tables', {})
+    plugins_config = ui_config.get('plugins', {})
+    _default_hide_cols = plugins_config.get('_default', {}).get('hide_columns', [])
+    table_config = plugins_config.get(plugin_name, {}).get(table_name, {})
+    hide_columns = table_config.get('hide_columns', [])
+    hide_columns.extend(_default_hide_cols)
+    # table_config
+    processed_df = dataframe
+    if table_config:
+        if hide_columns:
+            processed_df = dataframe.drop(columns=hide_columns, errors='ignore')
+
+        show_first_cols = table_config.get('show_first', [])
+        
+        all_cols = list(processed_df.columns)
+        show_first_cols = [c for c in show_first_cols if c in all_cols]
+
+        if show_first_cols:
+            display_cols = show_first_cols
+            remaining_cols = [c for c in all_cols if c not in show_first_cols]
+            display_cols.extend(remaining_cols)
+            processed_df = processed_df[display_cols]
+    # dataframe.columns.name =  # label above columns
+    dataframe.index.name = sidebar_plugin_param + '/' + table_name 
+    r = {
+        'filepath': filepath,
+        'filename': filename,
+        'dataframe': dataframe,
+        'tablename': table_name,
+    }
+    return r 
+    pass
+
+
 def show_selected_snapshot_tables(snapshot: pd.DataFrame):
     st.markdown("#### snapshot DF")
     # snapshot
@@ -137,60 +170,47 @@ def show_selected_snapshot_tables(snapshot: pd.DataFrame):
     snp_path = Path(local_dir_for_s3_sync) / snapshot_dict['snapshot_dir']
     filenames = set(checksums.keys())
     
-    selected_filenames = st.multiselect(
-        "Select filenames?",
-        filenames,
-        default=filenames,
-        # width="stretch",
-        width=600,
-        format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
-    )
-    
-    r = {}
+
+    col1, col2 = st.columns([3, 2])
+
+    with col1:
+        # st.header("A cat")
+        selected_filenames = st.multiselect(
+            "Select filenames?",
+            filenames,
+            default=filenames,
+            # width="stretch",
+            # width=600,
+            format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
+        )
+        # selected_filenames = st.pills(
+        #     "Select filenames?",
+        #     filenames,
+        #     default=filenames,
+        #     # width="stretch",
+        #     selection_mode="multi", 
+        #     # width=600,
+        #     # key="23223",
+        #     format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
+        # )    
+    with col2:
+        pass
+        # st.header("A dog")
+
+    r = []
     for filename in selected_filenames:
         _file_path = snp_path / filename
-        A_df = csv_to_dataclass(_file_path, {})
-        if not A_df.empty:
-            
-            plugin_name = sidebar_plugin_param
-            table_name = filename.replace(f"{plugin_name}_", "").replace(".csv", "")
-            ui_config.get('plugins', {}).get(plugin_name, {}).get('tables', {})
-            plugins_config = ui_config.get('plugins', {})
-            _default_hide_cols = plugins_config.get('_default', {}).get('hide_columns', [])
-            table_config = plugins_config.get(plugin_name, {}).get(table_name, {})
-            hide_columns = table_config.get('hide_columns', [])
-            hide_columns.extend(_default_hide_cols)
-            # table_config
-            processed_df = A_df
-            if table_config:
-                if hide_columns:
-                    processed_df = A_df.drop(columns=hide_columns, errors='ignore')
+        plugin_name = sidebar_plugin_param
+        table_name = filename.replace(f"{plugin_name}_", "").replace(".csv", "")
+        dataframe = csv_to_dataclass(_file_path, {})
+        if not dataframe.empty:
+            x = aaaaaa(dataframe, filename, _file_path, plugin_name, table_name)
+            r.append(x)
 
-                show_first_cols = table_config.get('show_first', [])
-                
-                all_cols = list(processed_df.columns)
-                show_first_cols = [c for c in show_first_cols if c in all_cols]
-
-                if show_first_cols:
-                    display_cols = show_first_cols
-                    remaining_cols = [c for c in all_cols if c not in show_first_cols]
-                    display_cols.extend(remaining_cols)
-                    processed_df = processed_df[display_cols]
-
-            r[filename] = {
-                'filepath': _file_path,
-                'filename': filename,
-                'dataframe': A_df,
-                'tablename': table_name,
-            }
-
-    # selected_filenames
-    snapshot_path = Path(local_dir_for_s3_sync) / snapshot_dict['snapshot_dir']
     return r
-    pass
 
 snapshot_dataframe_list = show_selected_snapshot_tables(selected_snapshot)
-for snp_df_item in snapshot_dataframe_list.values():
+for snp_df_item in snapshot_dataframe_list:
     # snp_df_item
     table_name = snp_df_item['tablename']
     snp_df = snp_df_item['dataframe']
