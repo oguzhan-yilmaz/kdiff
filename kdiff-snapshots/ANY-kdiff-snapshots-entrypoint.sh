@@ -173,8 +173,18 @@ retry_with_backoff \
 ls -al "data/$DIR_NAME"
 log_info "------------*------------*------------"
 
+log_info "----------DOING HERE HERE HERE -----------"
+# ls data/${DIR_NAME}/*.csv 
 
+echo "----------"
+aa=$(qsv cat rows --flexible data/${DIR_NAME}/*.csv | qsv select sp_connection_name 2>/dev/null | qsv frequency 2>/dev/null | qsv select value 2>/dev/null | qsv behead 2>/dev/null)
+echo "$aa"
+new_json=$(echo "$aa" | jq -Rn '{sp_connection_name: [inputs] | map(select(length > 0))}')
 
+log_info "new_json"
+log_info "$new_json"
+
+log_info "------------*------------*------------"
 
 metadata_file="data/${DIR_NAME}/kdiff-snapshot.metadata.json"
 extra_metadata=$(cat <<EOF
@@ -190,8 +200,9 @@ EOF
 # jq . "$extra_metadata" >/dev/null && echo "extra_metadata valid JSON" || echo "extra_metadata invalid JSON"
 new_metadata_json=$(jq --argjson extra "$extra_metadata" '.snapshotInfo += $extra' "$metadata_file")
 # jq . "$new_metadata_json" >/dev/null && echo "new_metadata_json valid JSON" || echo "new_metadata_json invalid JSON"
-
 echo "$new_metadata_json" > "$metadata_file"
+new_new_metadata_json=$(jq --argjson extra "$new_json" '.dividers += $extra' "$metadata_file")
+echo "$new_new_metadata_json" > "$metadata_file"
 log_info "Updated snapshotInfo on metadata file..."
 
 mkdir -p "tars/${STEAMPIPE_PLUGIN_NAME}"
