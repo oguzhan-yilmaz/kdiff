@@ -4,7 +4,7 @@ st.set_page_config(layout="wide")
 
 from typing import List, DefaultDict, Dict
 from datetime import datetime
-from config import boto3_session, bucket_name, ui_config
+from config import boto3_session, bucket_name, ui_config, snapshots_s3_prefix
 from storage import *
 from pathlib import Path
 import json
@@ -18,7 +18,7 @@ selected_time = None
 row_height_slider = None
 # --------- / init params ---------
 
-s3_remote_available_plugins = list_folders(bucket_name, 'snps')
+s3_remote_available_plugins = list_folders(bucket_name, snapshots_s3_prefix)
 sidebar_plugin_param = st.sidebar.radio(
         "Plugin Name",s3_remote_available_plugins,
         index=0,
@@ -88,6 +88,7 @@ selected_snapshot = set_sidebar_params()
 
 col1, col2, col3 = st.columns([4, 2, 1])
 
+# -- WIDGET right-most column for view settings 
 
 with col3:
     st.space(size="small")
@@ -98,38 +99,27 @@ with col3:
 
 
 # -- SIDEBAR sp connection 
-
 dividers = selected_snapshot.get('dividers', {})
 # st.markdown('#### dividers found')
 connection_values = dividers.get('sp_connection_name', [])
-
-# col2_selection = col2.radio(
-sp_connection_selected = st.sidebar.radio(
-    # 'Connection',
-    '**Context**',
-    options=connection_values,
-    # key=inp_param_name,
-    # default=connection_values[0],
-    # format_func=lambda option: option_map[option],
-    # selection_mode="single",
-)
+sp_connection_selected = st.sidebar.radio('**SP Connection**',options=connection_values,)
 
 
 # -- WIDGET object kinds
 # snp_filenames = [snp['filename'] for snp in snapshot_data_list]
-checksums = selected_snapshot['checksums']
-snp_filenames = set(checksums.keys())
-with col1:
-    # st.header("A cat")
-    selected_filenames = st.multiselect(
-        "Objects",
-        snp_filenames,
-        default=snp_filenames,
-        # width="stretch",
-        # width=600,
-        format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
-    )
-
+snp_filenames = set(selected_snapshot['checksums'])
+# with col1:
+# st.header("A cat")
+selected_filenames = col1.multiselect(
+    "Objects",
+    snp_filenames,
+    default=snp_filenames,
+    # width="stretch",
+    # width=600,
+    format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
+)
+if not selected_filenames:
+    st.warning("No Objects are selected, :rainbow[what do you want me to do?]")
 # -- SIDEBAR transpose 
 transpose_on = st.sidebar.toggle("Transpose Tables")
 
@@ -150,13 +140,8 @@ def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
         return pd.DataFrame()
 
 
+def aaaaaa(dataframe, filename, filepath, plugin_name, table_name) -> Dict:
 
-
-
-def aaaaaa(dataframe, filename, filepath, plugin_name, table_name):
-    # ui_config.get('plugins', {}).get(plugin_name, {})
-    # plugins_config = ui_config.get('plugins', {})
-    # current_plugin_conf = plugins_config.get(plugin_name, {})
     _default_hide_cols = current_plugin_conf.get('_default', {}).get('hide_columns', [])
     table_config = current_plugin_conf.get('tables', {}).get(table_name, {})
     hide_columns = table_config.get('hide_columns', [])
@@ -197,8 +182,7 @@ def aaaaaa(dataframe, filename, filepath, plugin_name, table_name):
     pass
 
 
-def get_snapshot_data(snapshot: pd.DataFrame):
-    st.markdown("#### snapshot DF")
+def get_snapshot_data(snapshot: pd.DataFrame) -> List[Dict]:
     # snapshot
     snapshot_dict = snapshot.to_dict()
     # snapshot_dict
@@ -221,25 +205,25 @@ def get_snapshot_data(snapshot: pd.DataFrame):
         table_name = filename.replace(f"{plugin_name}_", "").replace(".csv", "")
         dataframe = csv_to_dataclass(_file_path, {})
         if not dataframe.empty:
-            x = aaaaaa(dataframe, filename, _file_path, plugin_name, table_name)
-            # _existing_cols = list(filter(lambda col: col in dataframe.columns, divide_columns))
-            # divide_columns_found =  { div_col: [] for div_col in _existing_cols}
-            # divide_columns_found
             for col in _divide_cols_list:
                 if col in dataframe.columns: 
                     for uniq_val in dataframe[col].dropna().unique().tolist():
                         divide_columns[col].add(uniq_val)  
-            # x['divide_columns'] = divide_columns_found
-            # x
-            r.append(x)
+            df_dict = {
+                'filepath': _file_path,
+                'filename': filename,
+                'dataframe': dataframe,
+                'tablename': table_name,
+            }
+            r.append(df_dict)
     return r
 
 
 # ------------ SCRIPT STARTS HERE
+st.markdown(f"#### plugin:{plugin_name} connection:{sp_connection_selected} namespace:{1}")
 
 snapshot_data_list = get_snapshot_data(selected_snapshot)
-
-
+# TODO: if json-array: kind:List,version:v1,items:[] format to better table show
 
 # -- FILTER dataframes by sp_connection_name (context)
 if sp_connection_selected:
@@ -249,7 +233,7 @@ if sp_connection_selected:
         snp_df = snp_df_item['dataframe']
         new_snp_df = snp_df[snp_df['sp_connection_name'] == sp_connection_selected]
         snp_df_item['dataframe'] = new_snp_df
-        
+
     
 # -- ADD divider widgets(context, account, region etc.)
 divider_widgets={}
@@ -276,7 +260,8 @@ if divider_widgets:
         _allowed_values =  divider_widgets[col_name]
         # 'widget', col_name, _allowed_values
         
-        f'removing col:{col_name} allowed_values: {_allowed_values}'
+        if selected_filenames and (not _allowed_values):
+            st.warning(f"No **{col_name}** selected — showing **non-{col_name}'d** objects ")
         
         for snp_df_item in snapshot_data_list:
             snp_df = snp_df_item['dataframe']
@@ -301,6 +286,8 @@ for snp_df_item in snapshot_data_list:
     table_name = snp_df_item['tablename']
     snp_df = snp_df_item['dataframe']
     # snp_df.style.format(lambda x: json.dumps(x, indent=2) if isinstance(x, (list, dict)) else x)
+
+    # st.markdown(f"###### {table_name}")
     if not snp_df.empty:
         st.markdown(f"###### {table_name}")
         
