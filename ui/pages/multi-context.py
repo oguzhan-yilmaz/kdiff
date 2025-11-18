@@ -91,7 +91,8 @@ col1, col2, col3 = st.columns([4, 2, 1])
 
 with col3:
     st.space(size="small")
-    popover = st.popover(":rainbow[View Options]", icon=":material/settings:",)  #  type='primary'
+    # popover = st.popover(":rainbow[View Options]", icon=":material/settings:",)  #  type='primary'
+    popover = st.popover("", icon=":material/settings:",)  #  type='primary'
     row_height_slider = popover.slider("Row Height", 10, 120, 20, key="row_height")
     table_height_slider = popover.slider("Table Height", 300, 2000, 300, key="table_height")
 
