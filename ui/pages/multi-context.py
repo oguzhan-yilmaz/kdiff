@@ -12,7 +12,7 @@ import pandas as pd
 
 # --------- + init params ---------
 selected_snapshot = None
-sidebar_plugin_param = None
+# sidebar_plugin_param = None
 selected_date = None
 selected_time = None
 row_height_slider = None
@@ -25,20 +25,12 @@ sidebar_plugin_param = st.sidebar.radio(
         format_func=lambda a: f"**{a}**"
     )
 
-
-
-popover = st.popover(":rainbow[View Options (row height, etc..)]", icon=":material/settings:",)  #  type='primary'
-row_height_slider = popover.slider("Row Height", 10, 120, 20, key="row_height")
-table_height_slider = popover.slider("Table Height", 300, 2000, 300, key="table_height")
-# red = popover.checkbox("Show red items.", True)
-# blue = popover.checkbox("Show blue items.", True)
-# st.write("I'm ", row_height_slider, "years old")
-# if red:
-#     st.write(":red[This is a red item.]")
-# if blue:
-#     st.write(":blue[This is a blue item.]")
-
-
+plugin_name = sidebar_plugin_param
+plugins_config = ui_config.get('plugins', {})
+current_plugin_conf = plugins_config.get(plugin_name, {})
+_divide_cols_list = current_plugin_conf.get('divide_columns', [])
+divide_columns = { col: set() for col in _divide_cols_list }
+# divide_columns
 
 s3_snapshots = get_kdiff_snapshot_metadata_files_for_plugin(bucket_name, sidebar_plugin_param)
 s3_snapshots_df = pd.DataFrame(s3_snapshots)
@@ -94,36 +86,50 @@ def set_sidebar_params():
 
 selected_snapshot = set_sidebar_params()
 
-col1, col2 = st.columns([3, 2])
-checksums = selected_snapshot['checksums']
-filenames = set(checksums.keys())
+col1, col2, col3 = st.columns([4, 2, 1])
 
+
+with col3:
+    st.space(size="small")
+    popover = st.popover(":rainbow[View Options]", icon=":material/settings:",)  #  type='primary'
+    row_height_slider = popover.slider("Row Height", 10, 120, 20, key="row_height")
+    table_height_slider = popover.slider("Table Height", 300, 2000, 300, key="table_height")
+
+
+# -- SIDEBAR sp connection 
+
+dividers = selected_snapshot.get('dividers', {})
+# st.markdown('#### dividers found')
+connection_values = dividers.get('sp_connection_name', [])
+
+# col2_selection = col2.radio(
+sp_connection_selected = st.sidebar.radio(
+    # 'Connection',
+    '**Context**',
+    options=connection_values,
+    # key=inp_param_name,
+    # default=connection_values[0],
+    # format_func=lambda option: option_map[option],
+    # selection_mode="single",
+)
+
+
+# -- WIDGET object kinds
+# snp_filenames = [snp['filename'] for snp in snapshot_data_list]
+checksums = selected_snapshot['checksums']
+snp_filenames = set(checksums.keys())
 with col1:
     # st.header("A cat")
     selected_filenames = st.multiselect(
-        "Select filenames?",
-        filenames,
-        default=filenames,
+        "Objects",
+        snp_filenames,
+        default=snp_filenames,
         # width="stretch",
         # width=600,
         format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
     )
 
-        
-
-if selected_snapshot.get('dividers', False):
-    dividers = selected_snapshot.get('dividers')
-    st.markdown('#### dividers found')
-    connection_values = dividers['sp_connection_name']
-    
-    col2_selection = col2.radio(
-        'Connection',
-        options=connection_values,
-        # key=inp_param_name,
-        # default=connection_values[0],
-        # format_func=lambda option: option_map[option],
-        # selection_mode="single",
-    )
+# -- SIDEBAR transpose 
 transpose_on = st.sidebar.toggle("Transpose Tables")
 
 if transpose_on:
@@ -148,11 +154,10 @@ def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
 
 def aaaaaa(dataframe, filename, filepath, plugin_name, table_name):
     # ui_config.get('plugins', {}).get(plugin_name, {})
-    plugins_config = ui_config.get('plugins', {})
-    current_plugin_conf = plugins_config.get(plugin_name, {})
+    # plugins_config = ui_config.get('plugins', {})
+    # current_plugin_conf = plugins_config.get(plugin_name, {})
     _default_hide_cols = current_plugin_conf.get('_default', {}).get('hide_columns', [])
     table_config = current_plugin_conf.get('tables', {}).get(table_name, {})
-    divide_columns = current_plugin_conf.get('divide_columns', {})
     hide_columns = table_config.get('hide_columns', [])
     hide_columns.extend(_default_hide_cols)
     # hide_columns
@@ -191,7 +196,7 @@ def aaaaaa(dataframe, filename, filepath, plugin_name, table_name):
     pass
 
 
-def show_selected_snapshot_tables(snapshot: pd.DataFrame):
+def get_snapshot_data(snapshot: pd.DataFrame):
     st.markdown("#### snapshot DF")
     # snapshot
     snapshot_dict = snapshot.to_dict()
@@ -202,71 +207,104 @@ def show_selected_snapshot_tables(snapshot: pd.DataFrame):
     snp_path = Path(local_dir_for_s3_sync) / snapshot_dict['snapshot_dir']
     filenames = set(checksums.keys())
     
-
-
-    plugin_name = sidebar_plugin_param
-    plugins_config = ui_config.get('plugins', {})
-    current_plugin_conf = plugins_config.get(plugin_name, {})
-    divide_columns = current_plugin_conf.get('divide_columns', [])
     # _default_hide_cols = current_plugin_conf.get('_default', {}).get('hide_columns', [])
     # table_config = current_plugin_conf.get('tables', {}).get(table_name, {})
     # hide_columns = table_config.get('hide_columns', [])
     # hide_columns.extend(_default_hide_cols)
+    
     r = []
+    # checksums = selected_snapshot['checksums']
+    # filenames = set(checksums.keys())
     for filename in selected_filenames:
         _file_path = snp_path / filename
         table_name = filename.replace(f"{plugin_name}_", "").replace(".csv", "")
         dataframe = csv_to_dataclass(_file_path, {})
         if not dataframe.empty:
             x = aaaaaa(dataframe, filename, _file_path, plugin_name, table_name)
+            # _existing_cols = list(filter(lambda col: col in dataframe.columns, divide_columns))
+            # divide_columns_found =  { div_col: [] for div_col in _existing_cols}
+            # divide_columns_found
+            for col in _divide_cols_list:
+                if col in dataframe.columns: 
+                    for uniq_val in dataframe[col].dropna().unique().tolist():
+                        divide_columns[col].add(uniq_val)  
+            # x['divide_columns'] = divide_columns_found
+            # x
             r.append(x)
-    # -------------------------------------
-    # r
-    # input_params = {}
-    # # divide_columns
-    # bbb = pd.concat([
-    #     _['dataframe'][divide_columns]
-    #     for _ in r
-    #     if not _['dataframe'].empty
-    # ])
-    # # bbb 
-    # for div_col in divide_columns:
-    #     dataframe[div_col]
-    #     x = bbb[div_col].unique().tolist()
-    #     # st.write(x)
-    #     input_params[div_col] = x
-    # # st.write(input_params)
-    # print(input_params)
-    
-    # pillz={}
-    # for inp_param_name, inp_param_values in input_params.items():
-    #     col2_selection = col2.pills(
-    #         inp_param_name,
-    #         options=inp_param_values,
-    #         key=inp_param_name,
-    #         default=inp_param_values[0],
-    #         # format_func=lambda option: option_map[option],
-    #         selection_mode="single",
-    #     )
-    #     pillz[inp_param_name]=col2_selection
-    
-    
-    
     return r
 
-snapshot_dataframe_list = show_selected_snapshot_tables(selected_snapshot)
-for snp_df_item in snapshot_dataframe_list:
+
+# ------------ SCRIPT STARTS HERE
+
+snapshot_data_list = get_snapshot_data(selected_snapshot)
+
+
+
+# -- FILTER dataframes by sp_connection_name (context)
+if sp_connection_selected:
+    for snp_df_item in snapshot_data_list:
+        # snp_df_item
+        table_name = snp_df_item['tablename']
+        snp_df = snp_df_item['dataframe']
+        new_snp_df = snp_df[snp_df['sp_connection_name'] == sp_connection_selected]
+        snp_df_item['dataframe'] = new_snp_df
+        
+    
+# -- ADD divider widgets(context, account, region etc.)
+divider_widgets={}
+for col_name, div_options in divide_columns.items():
+    
+    # abcddas = col2.radio(
+    abcddas = col2.multiselect(
+        col_name.capitalize(),
+        # divide_columns[0],
+        options=div_options,
+        default=div_options,
+        # key=inp_param_name,
+        # format_func=lambda option: option_map[option],
+        # selection_mode="single",
+    )
+    divider_widgets[col_name] = abcddas
+    # divide_columns[col_name]['widget']=abcddas
+
+
+# -- FILTER dataframes by divider_columns (context)
+if divider_widgets:
+    
+    for col_name in divider_widgets.keys():
+        _allowed_values =  divider_widgets[col_name]
+        # 'widget', col_name, _allowed_values
+        f'removing col:{col_name} allowed_values: {_allowed_values}'
+        for snp_df_item in snapshot_data_list:
+            snp_df = snp_df_item['dataframe']
+            new_snp_df = snp_df[snp_df[col_name].isin(_allowed_values)]
+            # new_snp_df = snp_df[snp_df['sp_connection_name'] == sp_connection_selected]
+            snp_df_item['dataframe'] = new_snp_df
+            
+    # for snp_df_item in snapshot_data_list:
+    #     # snp_df_item
+    #     table_name = snp_df_item['tablename']
+    #     snp_df = snp_df_item['dataframe']
+    #     new_snp_df = snp_df[snp_df['sp_connection_name'] == sp_connection_selected]
+    #     snp_df_item['dataframe'] = new_snp_df
+        
+    
+
+
+# -- RENDER the dataframe
+for snp_df_item in snapshot_data_list:
     # snp_df_item
     table_name = snp_df_item['tablename']
     snp_df = snp_df_item['dataframe']
     st.markdown(f"###### {table_name}")
     # snp_df.style.format(lambda x: json.dumps(x, indent=2) if isinstance(x, (list, dict)) else x)
-    st.dataframe(
-        snp_df,
-        row_height=row_height_slider,
-        height=table_height_slider if (table_height_slider / row_height_slider) < len(snp_df) else 'auto',
-        # width='stretch',
-        # width=table_width_slider,
-    )
+    if not snp_df.empty:
+        st.dataframe(
+            snp_df,
+            row_height=row_height_slider,
+            height=table_height_slider if (table_height_slider / row_height_slider) < len(snp_df) else 'auto',
+            # width='stretch',
+            # width=table_width_slider,
+        )
 
 # snapshot_dataframes

@@ -3,9 +3,9 @@ plugins:
 
   # example conf: 
   plugin_name:
-    divide_columns: [sp_connection_name,]
+    divide_columns: []
     _default: 
-      hide_columns: [sp_ctx, _ctx]
+      hide_columns: [sp_ctx, _ctx, source_type]
     tables:
       table_name:
         unique_columns: [id, ]
@@ -13,9 +13,9 @@ plugins:
         hide_columns: [id, ]
 
   docker:
-    divide_columns: [sp_connection_name,]
+    divide_columns: []
     _default: 
-      hide_columns: [sp_ctx, _ctx]
+      hide_columns: [sp_ctx, _ctx, source_type]
     tables:
       container:
         unique_columns: [id, ]
@@ -35,9 +35,9 @@ plugins:
         show_first: [architecture, containers, containers_running, containers_stopped, containers_paused]
         # hide_columns: [id, ]
   kubernetes:
-    divide_columns: [sp_connection_name,]
+    divide_columns: [namespace]
     _default: 
-      hide_columns: [sp_ctx, _ctx]
+      hide_columns: [sp_ctx, _ctx, source_type]
     tables:
       node:
         unique_columns: [uid, ]
@@ -49,9 +49,17 @@ plugins:
         hide_columns: [uid, ]
                 
   hackernews:
-    divide_columns: [sp_connection_name,]
+    divide_columns: []
     tables:
       post:
         unique_columns: [id, ]
         show_first: [id, ]
         hide_columns: [id, ]
+
+  aws:
+    divide_columns: [account, region, ]
+    tables:
+      post:
+        unique_columns: [arn, ]
+        show_first: [arn, ]
+        hide_columns: [arn, ]
