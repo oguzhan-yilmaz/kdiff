@@ -274,13 +274,16 @@ if divider_widgets:
     for col_name in divider_widgets.keys():
         _allowed_values =  divider_widgets[col_name]
         # 'widget', col_name, _allowed_values
+        
         f'removing col:{col_name} allowed_values: {_allowed_values}'
+        
         for snp_df_item in snapshot_data_list:
             snp_df = snp_df_item['dataframe']
-            new_snp_df = snp_df[snp_df[col_name].isin(_allowed_values)]
-            # new_snp_df = snp_df[snp_df['sp_connection_name'] == sp_connection_selected]
-            snp_df_item['dataframe'] = new_snp_df
-            
+            if col_name in snp_df.columns:
+                new_snp_df = snp_df[snp_df[col_name].isin(_allowed_values)]
+                # new_snp_df = snp_df[snp_df['sp_connection_name'] == sp_connection_selected]
+                snp_df_item['dataframe'] = new_snp_df
+                
     # for snp_df_item in snapshot_data_list:
     #     # snp_df_item
     #     table_name = snp_df_item['tablename']
@@ -296,9 +299,10 @@ for snp_df_item in snapshot_data_list:
     # snp_df_item
     table_name = snp_df_item['tablename']
     snp_df = snp_df_item['dataframe']
-    st.markdown(f"###### {table_name}")
     # snp_df.style.format(lambda x: json.dumps(x, indent=2) if isinstance(x, (list, dict)) else x)
     if not snp_df.empty:
+        st.markdown(f"###### {table_name}")
+        
         st.dataframe(
             snp_df,
             row_height=row_height_slider,
@@ -306,5 +310,9 @@ for snp_df_item in snapshot_data_list:
             # width='stretch',
             # width=table_width_slider,
         )
+    else:
+        # st.markdown(f"###### {table_name} (n/a in selected {', '.join(list(divide_columns.keys()))})")
+        # st.markdown(f"###### {table_name} (n/a)")
+        pass
 
 # snapshot_dataframes
