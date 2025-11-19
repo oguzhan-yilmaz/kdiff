@@ -367,18 +367,32 @@ def render_common_files_as_diff_output(snpA, snpB, filenames, id_column, sp_conn
 
 inp_col1, inp_col2 = st.columns(2)
 
+_selectable_dates = s3_snapshots_df['display_date'].dropna().unique().tolist()
 
+with inp_col2:
+
+    _selectable_dates_snp_B = s3_snapshots_df['display_date'].dropna().unique().tolist()
+    # _selectable_dates_snp_B
+    #  dataframe[col]
+    snp_B_date = st.selectbox(
+        "SnpB Date",
+        _selectable_dates,
+    )
+    # select the rows where 'display_date' == snp_B_date
+    
 with inp_col1:
-    _selectable_dates_snp_A = s3_snapshots_df['display_date'].dropna().unique().tolist()
+    # _selectable_dates_snp_A = s3_snapshots_df['display_date'].dropna().unique().tolist()
     # _selectable_dates_snp_A
     #  dataframe[col]
     snp_A_date = st.selectbox(
         "SnpA Date",
-        _selectable_dates_snp_A,
-        index=1 if len(_selectable_dates_snp_A)>1 else 0,
+        _selectable_dates,
+        index=1 if len(_selectable_dates)>1 else 0,
     )
     # select the rows where 'display_date' == snp_A_date
     
+    
+with inp_col1:
     df_for_date = s3_snapshots_df[
         s3_snapshots_df['display_date'] == snp_A_date
     ]
@@ -388,20 +402,12 @@ with inp_col1:
     snp_A_time = st.selectbox(
         "SnpA times",
         _selecteble_times_A,
+        index=1 if (snp_A_date==snp_B_date) and len(_selecteble_times_A)>1 else 0,
     )
     snp_A_date, snp_A_time
 
 with inp_col2:
 
-    _selectable_dates_snp_B = s3_snapshots_df['display_date'].dropna().unique().tolist()
-    # _selectable_dates_snp_B
-    #  dataframe[col]
-    snp_B_date = st.selectbox(
-        "SnpB Date",
-        _selectable_dates_snp_B,
-    )
-    # select the rows where 'display_date' == snp_B_date
-    
     df_for_date = s3_snapshots_df[
         s3_snapshots_df['display_date'] == snp_B_date
     ]
@@ -430,6 +436,8 @@ snp_B = s3_snapshots_df[
 dividersA = snp_A.get('dividers', {}).get('sp_connection_name', [])
 dividersB = snp_B.get('dividers', {}).get('sp_connection_name', [])
 common_sp_conn_names = list(set(dividersA) & set(dividersB))
+if not common_sp_conn_names:
+    st.warning(f'These snapshots don\'t have any common SP Connection — left: "{', '.join(dividersA)}" right: "{', '.join(dividersB)}"')
 # st.markdown('#### dividers found')
 # connection_values = dividers.get('sp_connection_name', [])
 sp_connection_selected = st.sidebar.radio('**SP Connection**',options=common_sp_conn_names,)
