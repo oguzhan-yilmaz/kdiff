@@ -4,6 +4,8 @@ plugins:
   # example conf: 
   plugin_name:
     divide_columns: []
+    diffs:
+      unique_column: ""
     _default: 
       hide_columns: [sp_ctx, _ctx, source_type]
     tables:
@@ -14,6 +16,8 @@ plugins:
 
   docker:
     divide_columns: []
+    diffs:
+      unique_column: "id"
     _default: 
       hide_columns: [sp_ctx, _ctx, source_type]
     tables:
@@ -36,6 +40,8 @@ plugins:
         # hide_columns: [id, ]
   kubernetes:
     divide_columns: [namespace]
+    diffs:
+      unique_column: "uid"
     _default: 
       hide_columns: [sp_ctx, _ctx, source_type]
     tables:

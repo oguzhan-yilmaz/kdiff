@@ -74,18 +74,27 @@ def run_any_bash_command(command):
     
     try:
         # Run command using shell
+        # result = subprocess.run(
+        #     ["bash", "-c", command],    # force bash!
+        #     # command,
+        #     shell=True,
+        #     check=True,
+        #     text=True,
+        #     capture_output=True
+        # )
+        
         result = subprocess.run(
-            command,
-            shell=True,
+            ["bash", "-c", command],
             check=True,
             text=True,
-            capture_output=True
+            stdout=subprocess.PIPE,     # capture only if you *need* it
+            stderr=sys.stderr           # stream stderr live
         )
-        
+
         # if result.stdout:
         #     print(result.stdout)
         if result.stderr:
-            print(result.stderr, file=sys.stderr)
+            print(result.stderr)
         
         return result.stdout
         
