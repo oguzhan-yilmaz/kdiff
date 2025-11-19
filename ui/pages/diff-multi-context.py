@@ -36,7 +36,8 @@ divide_columns = { col: set() for col in _divide_cols_list }
 # divide_columns
 
 s3_snapshots = get_kdiff_snapshot_metadata_files_for_plugin(bucket_name, sidebar_plugin_param)
-s3_snapshots_df = pd.DataFrame(s3_snapshots)
+# s3_snapshots =  s3_snapshots
+s3_snapshots_df = pd.DataFrame(s3_snapshots).sort_values('timestampObj', ascending=False)
 s3_snapshots_df
 # print(json.dumps(s3_snapshots, indent=2, default=str))
 
@@ -352,81 +353,78 @@ def render_common_files_as_diff_output(snpA, snpB, filenames, id_column, sp_conn
 
 
 
-def diff_two_snapshots(snpA, snpB, sp_connection_name):
-    st.markdown('# diff_two_snapshots_checksum')
-    # snpA
-    # st.markdown('---')
-    # snpB
-    # new_objects, deleted_objects, changed_objects = compare_checksums_names(checksums_A, checksums_B)
-    # snpA
-    checksums_A = snpA['checksums']
-    checksums_B = snpB['checksums']
+# def diff_two_snapshots(snpA, snpB, sp_connection_name):
+#     # x = render_common_files_as_diff_output(snpA, snpB, list(common_files), 'uid',sp_connection_name)
+#     # # x
+
+
+# -- SnpA and SnpB widgets
+
+
+
+
+# s3_snapshots_df
+
+inp_col1, inp_col2 = st.columns(2)
+
+
+with inp_col1:
+    _selectable_dates_snp_A = s3_snapshots_df['display_date'].dropna().unique().tolist()
+    # _selectable_dates_snp_A
+    #  dataframe[col]
+    snp_A_date = st.selectbox(
+        "SnpA Date",
+        _selectable_dates_snp_A,
+        index=1 if len(_selectable_dates_snp_A)>1 else 0,
+    )
+    # select the rows where 'display_date' == snp_A_date
     
-    filenames_A = set(checksums_A.keys())
-    filenames_B = set(checksums_B.keys())
+    df_for_date = s3_snapshots_df[
+        s3_snapshots_df['display_date'] == snp_A_date
+    ]
+    # df_for_date
+    _selecteble_times_A = df_for_date['display_time'].dropna().unique().tolist()
+    # _selecteble_times_A
+    snp_A_time = st.selectbox(
+        "SnpA times",
+        _selecteble_times_A,
+    )
+    snp_A_date, snp_A_time
+
+with inp_col2:
+
+    _selectable_dates_snp_B = s3_snapshots_df['display_date'].dropna().unique().tolist()
+    # _selectable_dates_snp_B
+    #  dataframe[col]
+    snp_B_date = st.selectbox(
+        "SnpB Date",
+        _selectable_dates_snp_B,
+    )
+    # select the rows where 'display_date' == snp_B_date
     
-    # Files that exist in both A and B (potentially changed)
-    common_files = filenames_A & filenames_B
-    # Files deleted (in A but not in B)
-    deleted_files = filenames_A - filenames_B
-    # Files added (in B but not in A)
-    added_files = filenames_B - filenames_A
-    # Files changed (exist in both but with different checksums)
-    changed_files = {f for f in common_files if checksums_A[f] != checksums_B[f]}
-    # Files unchanged (exist in both with same checksums)
-    unchanged_files = {f for f in common_files if checksums_A[f] == checksums_B[f]}
+    df_for_date = s3_snapshots_df[
+        s3_snapshots_df['display_date'] == snp_B_date
+    ]
+    # df_for_date
+    _selecteble_times_B = df_for_date['display_time'].dropna().unique().tolist()
+    # _selecteble_times_B
+    snp_B_time = st.selectbox(
+        "SnpB times",
+        _selecteble_times_B,
+    )
 
-    # "deleted_files", deleted_files
-    # "added_files", added_files
-    # "changed_files", changed_files
-    # "unchanged_files", unchanged_files
-    st.markdown('#### common_files ')
-    common_files
-    st.markdown('#### added_files ')
-    added_files
-    st.markdown('#### deleted_files ')
-    deleted_files
+
+    snp_B_date, snp_B_time
+
     
-    st.markdown('---')
-    # sp_connection_name = "kubernetes_kind_kinder"
-    
-    diff_csv_outputs = run_qsv_diff_for_two_snapshots(snpA, snpB, list(common_files), sp_connection_name)
-    for d in diff_csv_outputs:
-        d['diff_df']
-    # x = render_common_files_as_diff_output(snpA, snpB, list(common_files), 'uid',sp_connection_name)
-    # # x
-# -- GOT THE 2 SNAPSHOT DICTS!
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-fp_A = "snps/kubernetes/kdiff-snp-2025-11-16--19-56/kdiff-snapshot.metadata.json"
-fp_B = "snps/kubernetes/kdiff-snp-2025-11-16--20-32/kdiff-snapshot.metadata.json"
-# fp_A
-# fp_B
-# todo. widget for snapshots
-snp_A = s3_snapshots_df[s3_snapshots_df["filepath"] == fp_A].iloc[0].to_dict()
-snp_B = s3_snapshots_df[s3_snapshots_df["filepath"] == fp_B].iloc[0].to_dict()
-# snp_A
-# snp_B
-
-
+snp_A = s3_snapshots_df[
+    (s3_snapshots_df['display_date'] == snp_A_date) &
+    (s3_snapshots_df['display_time'] == snp_A_time)
+].iloc[0].to_dict()
+snp_B = s3_snapshots_df[
+    (s3_snapshots_df['display_date'] == snp_B_date) &
+    (s3_snapshots_df['display_time'] == snp_B_time)
+].iloc[0].to_dict()
 
 # -- SIDEBAR sp connection 
 dividersA = snp_A.get('dividers', {}).get('sp_connection_name', [])
@@ -435,6 +433,28 @@ common_sp_conn_names = list(set(dividersA) & set(dividersB))
 # st.markdown('#### dividers found')
 # connection_values = dividers.get('sp_connection_name', [])
 sp_connection_selected = st.sidebar.radio('**SP Connection**',options=common_sp_conn_names,)
+
+
+
+
+if st.button("DIFF BABY DIFF", type='primary', width='stretch'):
+    if not (snp_A_date and snp_A_time) and (snp_B_date and snp_B_time):
+        st.error("Please select two snapshots to compare.")
+    
+    snp_A = s3_snapshots_df[
+        (s3_snapshots_df['display_date'] == snp_A_date) &
+        (s3_snapshots_df['display_time'] == snp_A_time)
+    ].iloc[0].to_dict()
+    snp_B = s3_snapshots_df[
+        (s3_snapshots_df['display_date'] == snp_B_date) &
+        (s3_snapshots_df['display_time'] == snp_B_time)
+    ].iloc[0].to_dict()
+
+
+    # -- GOT THE 2 SNAPSHOT DICTS!
+
+    snp_A
+    snp_B
 
 
 # # -- FILTER dataframes by sp_connection_name (context)
@@ -447,14 +467,53 @@ sp_connection_selected = st.sidebar.radio('**SP Connection**',options=common_sp_
 #         snp_df_item['dataframe'] = new_snp_df
 
 
-sync_kdiff_snapshot_to_local_filesystem(snp_A)
-sync_kdiff_snapshot_to_local_filesystem(snp_B)
-# sp_connection_name "kubernetes_kind_kinder"
-# diff_two_snapshots(snp_A, snp_B, sp_connection_name)
-diff_two_snapshots(snp_A, snp_B,sp_connection_selected)
+# sync_kdiff_snapshot_to_local_filesystem(snp_A)
+# sync_kdiff_snapshot_to_local_filesystem(snp_B)
+# # sp_connection_name "kubernetes_kind_kinder"
+# # diff_two_snapshots(snp_A, snp_B, sp_connection_name)
+# # diff_two_snapshots(snp_A, snp_B,sp_connection_selected)
+# st.markdown('# diff_two_snapshots_checksum')
+# # snpA
+# # st.markdown('---')
+# # snpB
+# # new_objects, deleted_objects, changed_objects = compare_checksums_names(checksums_A, checksums_B)
+# # snpA
+# checksums_A = snpA['checksums']
+# checksums_B = snpB['checksums']
 
+# filenames_A = set(checksums_A.keys())
+# filenames_B = set(checksums_B.keys())
 
-# snp_A
+# # Files that exist in both A and B (potentially changed)
+# common_files = filenames_A & filenames_B
+# # Files deleted (in A but not in B)
+# deleted_files = filenames_A - filenames_B
+# # Files added (in B but not in A)
+# added_files = filenames_B - filenames_A
+# # Files changed (exist in both but with different checksums)
+# changed_files = {f for f in common_files if checksums_A[f] != checksums_B[f]}
+# # Files unchanged (exist in both with same checksums)
+# unchanged_files = {f for f in common_files if checksums_A[f] == checksums_B[f]}
+
+# # "deleted_files", deleted_files
+# # "added_files", added_files
+# # "changed_files", changed_files
+# # "unchanged_files", unchanged_files
+# st.markdown('#### common_files ')
+# common_files
+# st.markdown('#### added_files ')
+# added_files
+# st.markdown('#### deleted_files ')
+# deleted_files
+
+# st.markdown('---')
+# # sp_connection_name = "kubernetes_kind_kinder"
+
+# diff_csv_outputs = run_qsv_diff_for_two_snapshots(snpA, snpB, list(common_files), sp_connection_name)
+# for d in diff_csv_outputs:
+#     d['diff_df']
+
+# # snp_A
 # snp_B
 
 
