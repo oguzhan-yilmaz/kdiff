@@ -10,6 +10,22 @@ def map_data_type(sql_type: str):
     """Map SQL data types to Python types."""
     sql_type = sql_type.lower()
     if sql_type in {"text", "varchar", "character varying"}:
+        return str
+    elif sql_type in {"bigint", "integer", "int"}:
+        return int
+    elif sql_type in {"json", "jsonb"}:
+        return dict
+    elif sql_type.startswith("timestamp"):
+        return datetime
+    elif sql_type in {"boolean", "bool"}:
+        return bool
+    else:
+        return Any
+
+def map_data_type_opt(sql_type: str):
+    """Map SQL data types to Python types."""
+    sql_type = sql_type.lower()
+    if sql_type in {"text", "varchar", "character varying"}:
         return Optional[str]
     elif sql_type in {"bigint", "integer", "int"}:
         return Optional[int]
@@ -21,7 +37,6 @@ def map_data_type(sql_type: str):
         return Optional[bool]
     else:
         return Optional[Any]
-
 
 # --- Conversion utility ---
 
@@ -51,72 +66,21 @@ def convert_value(value, py_type):
         return value
 
 
-# --- Dynamic dataclass table builder ---
-def build_table_classes(schema: Dict[str, Any]) -> Dict[str, Type]:
-    """Build a dataclass for each table in the schema."""
-    classes = {}
-
-    for table_name, table_def in schema.items():
-        fields_spec = []
-        for col in table_def["rows"]:
-            col_name = col["column_name"]
-            sql_type = col["data_type"]
-            py_type = map_data_type(sql_type)
-            fields_spec.append((col_name, py_type, field(default=None)))
-
-        TableClass = make_dataclass(
-            # table_name.capitalize(),  # class name
-            table_name,  # class name
-            fields_spec,
-            frozen=False,
-            # repr=True
-        )
-        
-        # Add helper for automatic type conversion on init
-        orig_init = TableClass.__init__
-
-        def __init__(self, **kwargs):
-            hints = get_type_hints(self.__class__)
-            converted = {}
-            for key, value in kwargs.items():
-                if key in hints:
-                    converted[key] = convert_value(value, hints[key])
-                else:
-                    converted[key] = value
-            orig_init(self, **converted)
-
-        TableClass.__init__ = __init__
-
-        classes[table_name] = TableClass
-
-    return classes
-
-
 # --- Example usage ---
 
-def get_scheme_json_file(schema_json_filepath: Path):
+def get_table_data_types(schema_json_filepath: Path):
     with open(f"{schema_json_filepath}", 'r') as ff:
-        # schema = json.load(ff)
-        content = ff.read()
-    return content
-
-def get_data_tables(schema_json_filepath: Path):
-    schema_json = get_scheme_json_file(schema_json_filepath)
-    schema = json.loads(schema_json)
-    # print(json.dumps(schema, indent=2) )
-    tables = build_table_classes(schema)
-    return tables
-
-
-def get_data_tables_from_multiple_schemas(schema_json_filepath_list: List[Path]) -> Dict:
+        schema_json = json.load(ff)
+    
     r = {}
-    for schema_json_filepath in schema_json_filepath_list:
-        schema_json = get_scheme_json_file(schema_json_filepath)
-        schema = json.loads(schema_json)
-        # print(json.dumps(schema, indent=2) )
-        tables = build_table_classes(schema)
-        r.update(tables)
+    for table_name, t_conf in schema_json.items():
+        v ={
+            x['column_name']: x['data_type']
+            for x in t_conf['rows']
+        }
+        r[table_name] = v
     return r
+
 
 if __name__ == "__main__":
 
@@ -130,9 +94,11 @@ if __name__ == "__main__":
     #     ]
     #   }
     # }
-    # """
-    tables = get_data_tables('/Users/ogair/Projects/kdiff/tables.structure.json')
-    print(json.dumps(tables, indent=2, default=str))
+
+        
+    
+    # print(json.dumps(r, indent=2, default=str))
+
     # # Use it dynamically
     # ClusterRole = tables["kubernetes_cluster_role"]
     # t = tables['kubernetes_pod']
@@ -140,3 +106,4 @@ if __name__ == "__main__":
     # print('----')
     # print(t.__class__)
     # print(t.__dict__)
+    pass

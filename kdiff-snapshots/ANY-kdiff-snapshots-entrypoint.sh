@@ -177,9 +177,11 @@ log_info "----------DOING HERE HERE HERE -----------"
 # ls data/${DIR_NAME}/*.csv 
 
 echo "----------"
-aa=$(qsv cat rows --flexible data/${DIR_NAME}/*.csv | qsv select sp_connection_name 2>/dev/null | qsv frequency 2>/dev/null | qsv select value 2>/dev/null | qsv behead 2>/dev/null)
-echo "$aa"
-new_json=$(echo "$aa" | jq -Rn '{sp_connection_name: [inputs] | map(select(length > 0))}')
+
+values=$(for f in data/${DIR_NAME}/*.csv; do
+    qsv select sp_connection_name "$f" | qsv behead
+done | sort | uniq)
+new_json=$(echo "$values" | jq -Rn '{sp_connection_name: [inputs] | map(select(length > 0))}')
 
 log_info "new_json"
 log_info "$new_json"
@@ -204,6 +206,9 @@ echo "$new_metadata_json" > "$metadata_file"
 new_new_metadata_json=$(jq --argjson extra "$new_json" '.dividers += $extra' "$metadata_file")
 echo "$new_new_metadata_json" > "$metadata_file"
 log_info "Updated snapshotInfo on metadata file..."
+
+steampipe query "select * from steampipe_plugin_column where plugin='hub.steampipe.io/plugins/turbot/aws@latest'" -o json 
+log_info "Extracted plugin tables metadata "
 
 mkdir -p "tars/${STEAMPIPE_PLUGIN_NAME}"
 # tar the snapshot

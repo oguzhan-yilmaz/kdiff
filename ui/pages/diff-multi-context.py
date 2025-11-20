@@ -12,13 +12,9 @@ import pandas as pd
 from misc import *
 from diff_csv import qsv_diff_different_files
 from io import StringIO
-# --------- + init params ---------
-selected_snapshot = None
-# sidebar_plugin_param = None
-selected_date = None
-selected_time = None
-row_height_slider = None
-# --------- / init params ---------
+from schema_types import get_table_data_types
+
+
 
 s3_remote_available_plugins = list_folders(bucket_name, snapshots_s3_prefix)
 sidebar_plugin_param = st.sidebar.radio(
@@ -27,6 +23,7 @@ sidebar_plugin_param = st.sidebar.radio(
         format_func=lambda a: f"**{a}**"
     )
 
+# -- GET Plugin Config
 plugin_name = sidebar_plugin_param
 plugins_config = ui_config.get('plugins', {})
 current_plugin_conf = plugins_config.get(plugin_name, {})
@@ -35,6 +32,8 @@ plugin_unique_column = current_plugin_conf.get('diffs', {}).get('unique_column',
 divide_columns = { col: set() for col in _divide_cols_list }
 # divide_columns
 
+
+# -- READ S3 bucket to get available snapshots for the plugin
 s3_snapshots = get_kdiff_snapshot_metadata_files_for_plugin(bucket_name, sidebar_plugin_param)
 # s3_snapshots =  s3_snapshots
 s3_snapshots_df = pd.DataFrame(s3_snapshots).sort_values('timestampObj', ascending=False)
@@ -42,54 +41,8 @@ s3_snapshots_df
 # print(json.dumps(s3_snapshots, indent=2, default=str))
 
 
-
-# def set_sidebar_params():
-#     # ---- SIDEBAR PARAMS ----
-#     # st.markdown("# set_sidebar_params")
-#     # snapshot_list
-#     # s3_snapshots
-#     if not s3_snapshots:
-#         {"failed": "s3_snapshots empty", "s3_snapshots": s3_snapshots}
-#         st.sidebar.markdown(f"No snapshots are found")
-#         st.exception(f"No snapshots are found for {sidebar_plugin_param}")
-            
-#     # Extract date and time columns
-#     s3_snapshots_df["date"] = s3_snapshots_df["timestampObj"].dt.date
-#     s3_snapshots_df["time"] = s3_snapshots_df["timestampObj"].dt.strftime("%H:%M:%S")
-
-#     # --- Sidebar DATE selector ---
-#     unique_dates = sorted(s3_snapshots_df["date"].unique())
-
-#     # unique_dates
-
-#     selected_date = st.sidebar.date_input(
-#         "Select a snapshot date",
-#         value=unique_dates[-1],            # default = latest date
-#         min_value=min(unique_dates),
-#         max_value=max(unique_dates),
-#     )
-
-#     # --- Filter snapshots for the selected date ---
-#     df_for_date = s3_snapshots_df[s3_snapshots_df["date"] == selected_date]
-
-#     # Show times belonging to that date
-#     time_options = df_for_date["time"].tolist()
-
-#     selected_time = st.sidebar.selectbox(
-#         "Select a snapshot time",
-#         options=time_options,
-#         key="selected_time"
-#     )
-
-#     # --- Find the selected snapshot row ---
-#     selected_snapshot = df_for_date[df_for_date["time"] == selected_time].iloc[0]
-#     return selected_snapshot
-
-
-# selected_snapshot = set_sidebar_params()
-
-col1, col2, col3 = st.columns([4, 2, 1],border=True)
 # -- WIDGET right-most column for view settings 
+col1, col2, col3 = st.columns([4, 2, 1],border=True)
 with col3:
     st.space(size="small")
     # popover = st.popover(":rainbow[View Options]", icon=":material/settings:",)  #  type='primary'
@@ -97,29 +50,6 @@ with col3:
     row_height_slider = popover.slider("Row Height", 10, 120, 20, key="row_height")
     table_height_slider = popover.slider("Table Height", 300, 2000, 300, key="table_height")
 
-
-# # -- SIDEBAR sp connection 
-# dividers = selected_snapshot.get('dividers', {})
-# # st.markdown('#### dividers found')
-# connection_values = dividers.get('sp_connection_name', [])
-# sp_connection_selected = st.sidebar.radio('**SP Connection**',options=connection_values,)
-
-
-# -- WIDGET object kinds
-# snp_filenames = [snp['filename'] for snp in snapshot_data_list]
-# snp_filenames = set(selected_snapshot['checksums'])
-# # with col1:
-# # st.header("A cat")
-# selected_filenames = col1.multiselect(
-#     "Objects",
-#     snp_filenames,
-#     default=snp_filenames,
-#     # width="stretch",
-#     # width=600,
-#     format_func=lambda s: s.replace(f"{sidebar_plugin_param}_", "").replace(".csv", "")
-# )
-# if not selected_filenames:
-#     st.warning("No Objects are selected, :rainbow[what do you want me to do?]")
 
 def csv_to_dataclass(csv_file_path: Path, dataclass_table: Dict):
     """
@@ -245,6 +175,8 @@ def run_qsv_diff_for_two_snapshots(snpA, snpB, changed_filenames,sp_connection_n
         if not out:
             continue
         diff_df = pd.read_csv(StringIO(out))
+        df_A = csv_to_dataclass(snp_A_ch_filepath, {})
+        df_B = csv_to_dataclass(snp_B_ch_filepath, {})
         # df = pd.read_csv(StringIO(csv_data))
         # out
         if diff_df.empty:
@@ -256,6 +188,8 @@ def run_qsv_diff_for_two_snapshots(snpA, snpB, changed_filenames,sp_connection_n
             'diff_df': diff_df,
             'diff_id':_diff_id,
             'filename':ch_filename,
+            'df_A': df_A,
+            'df_B': df_B,
         }
         r_list.append(oo)
     return r_list
@@ -352,32 +286,19 @@ def render_common_files_as_diff_output(snpA, snpB, filenames, id_column, sp_conn
 
 
 
-# def diff_two_snapshots(snpA, snpB, sp_connection_name):
-#     # x = render_common_files_as_diff_output(snpA, snpB, list(common_files), 'uid',sp_connection_name)
-#     # # x
-
-
-# -- SnpA and SnpB widgets
 
 
 
-
-# s3_snapshots_df
-
+# -- WIDGETS date/time widgets for SnpA and SnpB 
 inp_col1, inp_col2 = st.columns(2,border=True)
 
 _selectable_dates = s3_snapshots_df['display_date'].dropna().unique().tolist()
 
 with inp_col2:
-
-    _selectable_dates_snp_B = s3_snapshots_df['display_date'].dropna().unique().tolist()
-    # _selectable_dates_snp_B
-    #  dataframe[col]
     snp_B_date = st.selectbox(
         "SnpB Date",
         _selectable_dates,
     )
-    # select the rows where 'display_date' == snp_B_date
     
 with inp_col1:
     # _selectable_dates_snp_A = s3_snapshots_df['display_date'].dropna().unique().tolist()
@@ -395,9 +316,7 @@ with inp_col1:
     df_for_date = s3_snapshots_df[
         s3_snapshots_df['display_date'] == snp_A_date
     ]
-    # df_for_date
     _selecteble_times_A = df_for_date['display_time'].dropna().unique().tolist()
-    # _selecteble_times_A
     snp_A_time = st.selectbox(
         "SnpA times",
         _selecteble_times_A,
@@ -406,13 +325,10 @@ with inp_col1:
     snp_A_date, snp_A_time
 
 with inp_col2:
-
     df_for_date = s3_snapshots_df[
         s3_snapshots_df['display_date'] == snp_B_date
     ]
-    # df_for_date
     _selecteble_times_B = df_for_date['display_time'].dropna().unique().tolist()
-    # _selecteble_times_B
     snp_B_time = st.selectbox(
         "SnpB times",
         _selecteble_times_B,
@@ -421,7 +337,7 @@ with inp_col2:
 
     snp_B_date, snp_B_time
 
-
+# -- GET SNAPSHOT json objects for SnpA and SnpB 
 snp_A = s3_snapshots_df[
     (s3_snapshots_df['display_date'] == snp_A_date) &
     (s3_snapshots_df['display_time'] == snp_A_time)
@@ -431,7 +347,7 @@ snp_B = s3_snapshots_df[
     (s3_snapshots_df['display_time'] == snp_B_time)
 ].iloc[0].to_dict()
 
-# -- SIDEBAR sp connection 
+# -- SIDEBAR WIDGET Steampipe Connection  
 dividersA = snp_A.get('dividers', {}).get('sp_connection_name', [])
 dividersB = snp_B.get('dividers', {}).get('sp_connection_name', [])
 common_sp_conn_names = list(set(dividersA) & set(dividersB))
@@ -445,25 +361,98 @@ sp_connection_selected = st.sidebar.radio('**SP Connection**',options=common_sp_
 
 # -- SIDEBAR auto_press_button 
 auto_press_button = st.sidebar.toggle("Always Diff")
+# ==============================================================================================================================================
+# ==============================================================================================================================================
+# ==============================================================================================================================================
 
-if st.button("DIFF BABY DIFF", type='primary', width='stretch') or auto_press_button:
-    if not (snp_A_date and snp_A_time) and (snp_B_date and snp_B_time):
-        st.error("Please select two snapshots to compare.")
+
+
+
+
+# def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[str] = ['namespace', 'name']) -> Dict[str, pd.DataFrame]:
+def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[str] = ['uid']) -> Dict[str, pd.DataFrame]:
+    """
+    Given a DataFrame produced by `qsv diff`, group modified rows (those having both '+' and '-'
+    for the same unique_cols values) into separate sub-DataFrames.
+
+    Returns:
+        { "modified": pd.DataFrame(...), "added": pd.DataFrame(...), "removed": pd.DataFrame(...) }
+    """
+    if diff_df.empty:
+        return {"modified": pd.DataFrame(), "added": pd.DataFrame(), "removed": pd.DataFrame()}
+
+    # Validate required columns
+    if 'diffresult' not in diff_df.columns:
+        raise ValueError("Input DataFrame must include a 'diffresult' column ('+' or '-').")
+
+    # Split by diff type
+    added_df = diff_df[diff_df['diffresult'] == '+'].copy()
+    removed_df = diff_df[diff_df['diffresult'] == '-'].copy()
+
+    # Identify keys that exist in both added and removed (modified)
+    added_keys = set(tuple(row) for row in added_df[unique_cols].itertuples(index=False, name=None))
+    removed_keys = set(tuple(row) for row in removed_df[unique_cols].itertuples(index=False, name=None))
+    modified_keys = added_keys & removed_keys
+    # "modified_keys", modified_keys
+    # Build DataFrame of modified entries (both versions)
+    modified_df = diff_df[
+        diff_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
+    ].sort_values(unique_cols + ['diffresult'])
+    modified_df = modified_df.query("diffresult == '+'").drop(columns='diffresult')
+    # modified_df
+    # Filter out modified rows from added/removed sets
+    added_df = added_df[
+        ~added_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
+    ]
+    removed_df = removed_df[
+        ~removed_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
+    ]
     
-    snp_A = s3_snapshots_df[
-        (s3_snapshots_df['display_date'] == snp_A_date) &
-        (s3_snapshots_df['display_time'] == snp_A_time)
-    ].iloc[0].to_dict()
-    snp_B = s3_snapshots_df[
-        (s3_snapshots_df['display_date'] == snp_B_date) &
-        (s3_snapshots_df['display_time'] == snp_B_time)
-    ].iloc[0].to_dict()
+    added_df = added_df.drop(columns='diffresult') 
+    removed_df = removed_df.drop(columns='diffresult') 
 
+    # Style removed rows with red background
+    return {
+        "modified_keys": modified_keys,
+        "modified": modified_df.reset_index(drop=True),
+        "added": added_df.reset_index(drop=True),
+        "removed": removed_df.reset_index(drop=True),
+    }
+
+
+
+
+
+
+
+
+
+
+# ==============================================================================================================================================
+# ==============================================================================================================================================
+# ==============================================================================================================================================
+
+# def get_data_classes(snpA, snpB):
+#     table_structure_json_path_list = [
+#         Path(local_dir_for_s3_sync) / snpA['snapshot_dir'] / 'tables.structure.json',
+#         Path(local_dir_for_s3_sync) / snpB['snapshot_dir'] / 'tables.structure.json'
+#     ]
+#     tables = get_data_tables_from_multiple_schemas(table_structure_json_path_list)
+#     print("-*--**-*-09889-**-*-*-*-*")
+#     # print(json.dumps(tables, indent=2, default=str))
+#     return tables
+
+
+if auto_press_button or st.button("DIFF BABY DIFF", type='primary', width='stretch'):
+    if (not snp_A) and (not snp_B):
+        st.error("Please select two snapshots to compare.")
+        st.markdown('# aaa---aab--b--')
 
     # -- GOT THE 2 SNAPSHOT DICTS!
 
     # snp_A
     # snp_B
+    # data_classes = get_data_classes(snp_A, snp_B)
 
     sync_kdiff_snapshot_to_local_filesystem(snp_A)
     sync_kdiff_snapshot_to_local_filesystem(snp_B)
@@ -476,7 +465,6 @@ if st.button("DIFF BABY DIFF", type='primary', width='stretch') or auto_press_bu
     # snpA
     checksums_A = snp_A['checksums']
     checksums_B = snp_B['checksums']
-
     filenames_A = set(checksums_A.keys())
     filenames_B = set(checksums_B.keys())
 
@@ -508,13 +496,95 @@ if st.button("DIFF BABY DIFF", type='primary', width='stretch') or auto_press_bu
     diff_csv_outputs = run_qsv_diff_for_two_snapshots(snp_A, snp_B, list(common_files), sp_connection_selected)
     for d in diff_csv_outputs:
         st.markdown(f'#### {d['filename']}')
-        d['diff_df']
+        filename=d['filename']
+        _name= str(Path(filename).stem)
+        # data_classes
+        # dis_data_class = data_classes.get(_name, False)
+        # dis_data_class
+        diff_df = d['diff_df']
+        df_A =  d['df_A']
+        df_B =  d['df_B']
+        # diff_df
+        # df_A
+        # df_B
+        parsed_dict = parse_diff_dataframe(diff_df, df_A, df_B, unique_cols=plugin_unique_column.split(',')) 
+        modified_keys = parsed_dict['modified_keys']
+        modified_df = parsed_dict['modified']
+        added_df = parsed_dict['added']
+        removed_df = parsed_dict['removed']
+        
+        
+        dtypes = get_table_data_types('/Users/ogair/Projects/kdiff/kdiff-snapshots/data/kubernetes/kdiff-snp-2025-11-16--20-32/tables.structure.json')
+        dtypes
+    # schema_json = get_scheme_json_file('/Users/ogair/Projects/kdiff/kdiff-snapshots/data/kubernetes/kdiff-snp-2025-11-16--20-32/tables.structure.json')
+    # print(json.dumps(schema_json, indent=2, default=str))
 
-    # snp_A
-    # snp_B
-
-
- 
+        
+        
+        st.markdown("---")
+        
+        # ----------------------------SHOW EM-----------------------------------------
+        if not added_df.empty: 
+            styled_added = added_df.style.set_properties(**{
+                'background-color': '#d4edda',  # light green
+                'color': 'black'
+            })
+            st.markdown("**Added::in-place**")
+            styled_added
+        if not removed_df.empty: 
+            styled_removed = removed_df.style.set_properties(**{
+                'background-color': '#f8d7da',  # light red
+                'color': 'black'
+            })
+            st.markdown("**Removed::in-place**")
+            styled_removed
+        
+        dfs=[]
+        for idx, row in modified_df.iterrows():
+            uid = row['uid']
+            original_row = df_A[df_A['uid'] == uid].iloc[0]
+            
+            # "row", row
+            # "original_row", original_row
+            new_df = pd.DataFrame([original_row, row])
+            new_df = new_df.reset_index(drop=True)  # Sets index to 0, 1
+            # for col in new_df.select_dtypes(include=['object', 'string']):
+            #     new_df[col] = new_df[col].fillna("")
+            # new_df.loc[0] = new_df.loc[0].fillna("")
+            # new_df.loc[1] = new_df.loc[1].fillna("") 
+            dfs.append(new_df)
+            
+        # if not modified_df.empty: 
+        #     sytled_modified = modified_df.style.set_properties(**{
+        #         'background-color': "#5d55b1",  # light red
+        #         'color': 'black'
+        #     })
+        #     sytled_modified
+        # def highlight_second_row(col):
+        #     styles = [''] * len(col)
+        #     styles[1] = 'background-color: #5d55b1; color: black'
+        #     return styles
+        def highlight_second_row(col):
+            styles = [''] * len(col)
+            # Check if the second row exists and has a non-empty value
+            if len(col) > 1 and col.iloc[1] not in [None, '', float('nan')]:
+                styles[1] = 'background-color: #5d55b1; color: black'
+            return styles
+        st.markdown("**Changed::in-place**")
+        for print_df in dfs:
+            if not print_df.empty: 
+                # styled_print_df = print_df.style.set_properties(
+                #     subset=pd.IndexSlice[1:1, :],  # Row index 1 (2nd row), all columns
+                #     **{
+                #         'background-color': "#5d55b1",
+                #         'color': 'black'
+                #     }
+                # )
+                # styled_print_df = print_df.T.style.apply(highlight_second_row, axis=0)
+                styled_print_df = print_df.style.apply(highlight_second_row, axis=0)
+                
+                styled_print_df
+    
 
 
 # st.markdown(f"#### plugin:{plugin_name} connection:{sp_connection_selected} namespace:{1}")

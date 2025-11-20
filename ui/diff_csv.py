@@ -7,9 +7,8 @@ from s3_and_local_files import run_any_bash_command
 # from typing import Optional, Dict
 # import pandas as pd
 import json
-from schema_types import get_data_tables_from_multiple_schemas
 
-def qsv_diff_different_files(left_file: Path, right_file: Path, id_column: str, sp_connection_name: str) -> None:
+def qsv_diff_different_files(left_file: Path, right_file: Path, id_column: str, sp_connection_name: str) -> str:
     # Construct full paths
     # Check if both files exist
     if not left_file.exists():
@@ -24,8 +23,8 @@ def qsv_diff_different_files(left_file: Path, right_file: Path, id_column: str, 
         <(qsv search -s sp_connection_name '{sp_connection_name}' {str(right_file)})
     """
 
-    print(cmd)
+    # print(cmd)
     out = run_any_bash_command(cmd)
-    print(out)
-    print('------------------')
+    # print(out)
+    # print('------------------')
     return out

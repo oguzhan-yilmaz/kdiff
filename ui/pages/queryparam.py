@@ -7,7 +7,6 @@ from misc import *
 from diff_csv import qsv_diff_different_files
 from typing import List, Dict
 from s3_and_local_files import run_aws_cli_sync
-from schema_types import get_data_tables_from_multiple_schemas
 # import yaml
 
 USER_TIMEZONE = st.context.timezone
@@ -83,15 +82,15 @@ def sync_kdiff_snapshot_to_local(snp_obj):
     else:
         st.error(f"Failed to sync AWS to Local: {bucket_name}, {snapshot_dir}, {str(active_snapshot_sync_path)}")
 
-def get_data_classes(snpA, snpB):
-    table_structure_json_path_list = [
-        Path(local_dir_for_s3_sync) / snpA['snapshot_dir'] / 'tables.structure.json',
-        Path(local_dir_for_s3_sync) / snpB['snapshot_dir'] / 'tables.structure.json'
-    ]
-    tables = get_data_tables_from_multiple_schemas(table_structure_json_path_list)
-    # print("-*--**-*-09889-**-*-*-*-*")
-    # print(json.dumps(tables, indent=2, default=str))
-    return tables
+# def get_data_classes(snpA, snpB):
+#     table_structure_json_path_list = [
+#         Path(local_dir_for_s3_sync) / snpA['snapshot_dir'] / 'tables.structure.json',
+#         Path(local_dir_for_s3_sync) / snpB['snapshot_dir'] / 'tables.structure.json'
+#     ]
+#     # tables = get_data_tables_from_multiple_schemas(table_structure_json_path_list)
+#     # print("-*--**-*-09889-**-*-*-*-*")
+#     # print(json.dumps(tables, indent=2, default=str))
+#     return tables
 
 def generate_qsv_diff_for_file_list(snpA, snpB, changed_filenames):
     """ Generates *.diff.csv files"""
