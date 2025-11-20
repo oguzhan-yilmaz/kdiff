@@ -207,9 +207,6 @@ new_new_metadata_json=$(jq --argjson extra "$new_json" '.dividers += $extra' "$m
 echo "$new_new_metadata_json" > "$metadata_file"
 log_info "Updated snapshotInfo on metadata file..."
 
-steampipe query "select * from steampipe_plugin_column where plugin='hub.steampipe.io/plugins/turbot/aws@latest'" -o json 
-log_info "Extracted plugin tables metadata "
-
 mkdir -p "tars/${STEAMPIPE_PLUGIN_NAME}"
 # tar the snapshot
 log_info "Creating tar archive..."
