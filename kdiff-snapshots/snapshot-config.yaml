@@ -1,0 +1,108 @@
+plugins:
+  _plugin_name:
+    exclude_tables:
+      - ""
+
+  aws:
+    exclude_tables:
+      - keyspaces_keyspace
+      - keyspaces_table
+      - resource_explorer_index
+      - aws_ssm_inventory_entry
+      - codedeploy_deployment_config
+      - aws_ssm_document
+      - ce_cost_allocation_tags
+      - servicequotas_service
+      - cost_by_service_monthly
+      - availability_zone
+      - aws_cost_by_account_monthly
+      - aws_cost_by_record_type_monthly
+      - aws_cost_usage
+      - aws_cloudwatch_metric
+      - aws_eks_addon_version
+      - aws_wellarchitected_lens_share
+      - aws_cost_by_service_usage_type_monthly
+      - cost_forecast_monthly
+      - aws_ec2_instance_availability
+      - aws_ec2_instance_type
+      - aws_servicequotas_default_service_quota
+      - aws_ebs_volume_metric_read_ops_daily
+      - aws_rds_db_instance_metric_write_iops_daily
+      - aws_ebs_volume_metric_write_ops_daily
+      - aws_rds_db_instance_metric_read_iops_daily
+      - aws_elasticache_redis_metric_engine_cpu_utilization_daily
+      - aws_lambda_function_metric_duration_daily
+      - aws_cost_by_record_type_daily
+      - aws_rds_db_instance_metric_connections_daily
+      - aws_redshift_cluster_metric_cpu_utilization_daily
+      - aws_lambda_function_metric_invocations_daily
+      - aws_ec2_application_load_balancer_metric_request_count_daily
+      - aws_ec2_network_load_balancer_metric_net_flow_count_daily
+      - aws_cost_forecast_daily
+      - aws_ec2_instance_metric_cpu_utilization_daily
+      - aws_cost_by_service_usage_type_daily
+      - aws_cloudtrail_lookup_event
+      - aws_cloudtrail_trail_event
+      - aws_ecs_cluster_metric_cpu_utilization_daily
+      - aws_cost_by_resource_daily
+      - aws_cost_by_account_daily
+      - aws_cost_by_service_daily
+      - aws_rds_db_instance_metric_cpu_utilization_daily
+      - aws_lambda_function_metric_errors_daily
+      - aws_bedrock_foundation_model
+      - aws_cost_by_service_monthly
+      - aws_region
+      - aws_cost_by_resource_monthly
+      - aws_cost_forecast_monthly
+      - aws_cost_by_resource_hourly
+      - aws_sagemaker_model
+      - aws_iot_fleet_metric
+      - aws_ebs_volume_metric_read_ops
+      - aws_elasticache_redis_metric_list_based_cmds_hourly
+      - aws_vpc_nat_gateway_metric_bytes_out_to_destination
+      - aws_elasticache_redis_metric_get_type_cmds_hourly
+      - aws_cloudwatch_log_metric_filter
+      - aws_rds_db_instance_metric_write_iops
+      - aws_emr_cluster_metric_is_idle
+      - aws_rds_db_instance_metric_write_iops_hourly
+      - aws_elasticache_redis_metric_new_connections_hourly
+      - aws_ec2_instance_metric_cpu_utilization
+      - aws_ecs_cluster_metric_cpu_utilization_hourly
+      - aws_elasticache_redis_metric_engine_cpu_utilization_hourly
+      - aws_rds_db_instance_metric_connections_hourly
+      - aws_cloudwatch_metric_data_point
+      - aws_rds_db_instance_metric_read_iops
+      - aws_ebs_volume_metric_write_ops_hourly
+      - aws_elasticache_redis_metric_curr_connections_hourly
+      - aws_ec2_network_load_balancer_metric_net_flow_count
+      - aws_cloudwatch_metric_statistic_data_point
+      - aws_rds_db_instance_metric_cpu_utilization_hourly
+      - aws_rds_db_instance_metric_connections
+      - aws_ebs_volume_metric_read_ops_hourly
+      - aws_rds_db_instance_metric_cpu_utilization
+      - aws_ec2_instance_metric_cpu_utilization_hourly
+      - aws_dynamodb_metric_account_provisioned_write_capacity_util
+      - aws_ebs_volume_metric_write_ops
+      - aws_elasticache_redis_metric_cache_hits_hourly
+      - aws_ecs_cluster_metric_cpu_utilization
+      - aws_dynamodb_metric_account_provisioned_read_capacity_util
+      - aws_rds_db_instance_metric_read_iops_hourly
+      - aws_ec2_application_load_balancer_metric_request_count
+      - aws_ec2_managed_prefix_list
+      - aws_ec2_managed_prefix_list_entry
+      - aws_ec2_spot_price
+      - aws_ec2_ssl_policy
+      - aws_iam_action
+      - aws_kms_alias
+      - aws_pricing_service_attribute
+      - aws_pricing_product
+      - aws_rds_db_engine_version
+      - aws_servicequotas_service_quota
+      - aws_cost_by_region_monthly
+      - aws_wellarchitected_lens
+      # # MAYBE?
+      # - aws_vpc_verified_access_trust_provider
+      # - aws_ec2_capacity_reservation
+      # - aws_bedrock_custom_model
+      # - aws_bedrock_imported_model
+      # - aws_cloudwatch_metric

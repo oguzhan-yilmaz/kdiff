@@ -98,9 +98,23 @@ fi
 
 log_debug "Found $(echo "$tables" | wc -l) tables"
 
+
+CONFIG_FILE="snapshot-config.yaml"
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "ERROR: Config file not found: $CONFIG_FILE" >&2
+    exit 1
+fi
+
+
 mkdir "${OUT_DIR}/_table_metadata/"
 # Process each table
 for table in $tables; do
+    if yq -e ".plugins.${STEAMPIPE_PLUGIN_NAME}.exclude_tables[] | select(. == \"$table\")" "$CONFIG_FILE" >/dev/null 2>&1; then
+        log_info "Skipping excluded table: $table in the snapshot-config.yaml"
+        continue
+    fi
+
     out_file="${OUT_DIR}/${table}.csv"
     sql_query="SELECT * FROM ${STEAMPIPE_PLUGIN_NAME}.$table"
     log_info "Processing: $table"
@@ -114,11 +128,13 @@ for table in $tables; do
         log_warning "Failed to query table $table, skipping..."
         continue
     fi
+
     # have the file get deleted if produced no results(1 line file) and continue
-    if [ $(wc -l < "$out_file") -lt 2 ]; then
-        log_debug "$out_file CSV has no data (empty or only headers), removing it..."
+    row_count=$(qsv count "$out_file")
+    if [ "$row_count" -eq 0 ]; then
+        log_info "CSV has no data (0 data rows), ${table}.csv, removing it..."
         rm "$out_file"
-        continue  # we also want to skip the metadata.json creation
+        continue  # skip metadata.json creation
     fi
 
 
