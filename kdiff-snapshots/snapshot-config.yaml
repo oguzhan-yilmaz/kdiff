@@ -5,16 +5,16 @@ plugins:
 
   aws:
     exclude_tables:
-      - keyspaces_keyspace
-      - keyspaces_table
-      - resource_explorer_index
+      - aws_keyspaces_keyspace
+      - aws_keyspaces_table
+      - aws_resource_explorer_index
       - aws_ssm_inventory_entry
-      - codedeploy_deployment_config
+      - aws_codedeploy_deployment_config
       - aws_ssm_document
-      - ce_cost_allocation_tags
-      - servicequotas_service
-      - cost_by_service_monthly
-      - availability_zone
+      - aws_ce_cost_allocation_tags
+      - aws_servicequotas_service
+      - aws_cost_by_service_monthly
+      - aws_availability_zone
       - aws_cost_by_account_monthly
       - aws_cost_by_record_type_monthly
       - aws_cost_usage
@@ -22,7 +22,7 @@ plugins:
       - aws_eks_addon_version
       - aws_wellarchitected_lens_share
       - aws_cost_by_service_usage_type_monthly
-      - cost_forecast_monthly
+      - aws_cost_forecast_monthly
       - aws_ec2_instance_availability
       - aws_ec2_instance_type
       - aws_servicequotas_default_service_quota
