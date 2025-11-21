@@ -370,7 +370,7 @@ auto_press_button = st.sidebar.toggle("Always Diff")
 
 
 # def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[str] = ['namespace', 'name']) -> Dict[str, pd.DataFrame]:
-def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[str] = ['uid']) -> Dict[str, pd.DataFrame]:
+def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B,  data_types: Dict[str, str], unique_cols: List[str] = ['uid']) -> Dict[str, pd.DataFrame]:
     """
     Given a DataFrame produced by `qsv diff`, group modified rows (those having both '+' and '-'
     for the same unique_cols values) into separate sub-DataFrames.
@@ -408,15 +408,12 @@ def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[st
         ~removed_df[unique_cols].apply(tuple, axis=1).isin(modified_keys)
     ]
     
-    added_df = added_df.drop(columns='diffresult') 
-    removed_df = removed_df.drop(columns='diffresult') 
 
-    # Style removed rows with red background
     return {
         "modified_keys": modified_keys,
         "modified": modified_df.reset_index(drop=True),
-        "added": added_df.reset_index(drop=True),
-        "removed": removed_df.reset_index(drop=True),
+        "added": added_df.drop(columns='diffresult') .reset_index(drop=True),
+        "removed": removed_df.drop(columns='diffresult').reset_index(drop=True),
     }
 
 
@@ -443,6 +440,8 @@ def parse_diff_dataframe(diff_df: pd.DataFrame, df_A, df_B, unique_cols: List[st
 #     return tables
 
 
+table_dtypes = get_table_data_types(Path(local_dir_for_s3_sync) / snp_A['snapshot_dir'] / 'tables.structure.json')
+# dtypes
 if auto_press_button or st.button("DIFF BABY DIFF", type='primary', width='stretch'):
     if (not snp_A) and (not snp_B):
         st.error("Please select two snapshots to compare.")
@@ -497,25 +496,81 @@ if auto_press_button or st.button("DIFF BABY DIFF", type='primary', width='stret
     for d in diff_csv_outputs:
         st.markdown(f'#### {d['filename']}')
         filename=d['filename']
-        _name= str(Path(filename).stem)
-        # data_classes
-        # dis_data_class = data_classes.get(_name, False)
-        # dis_data_class
+        _table_name= str(Path(filename).stem)
+
         diff_df = d['diff_df']
         df_A =  d['df_A']
         df_B =  d['df_B']
         # diff_df
         # df_A
         # df_B
-        parsed_dict = parse_diff_dataframe(diff_df, df_A, df_B, unique_cols=plugin_unique_column.split(',')) 
+        t_dtype = table_dtypes.get(_table_name, {})
+        
+        parsed_dict = parse_diff_dataframe(diff_df, df_A, df_B, t_dtype, unique_cols=plugin_unique_column.split(',')) 
         modified_keys = parsed_dict['modified_keys']
         modified_df = parsed_dict['modified']
         added_df = parsed_dict['added']
         removed_df = parsed_dict['removed']
-        
-        
-        dtypes = get_table_data_types('/Users/ogair/Projects/kdiff/kdiff-snapshots/data/kubernetes/kdiff-snp-2025-11-16--20-32/tables.structure.json')
-        dtypes
+        dfs=[]
+        # modified_df
+        for idx, row in modified_df.iterrows():
+            uid = row[plugin_unique_column]
+            original_row = df_A[df_A[plugin_unique_column] == uid].iloc[0]
+            
+            # "row", row
+            # "original_row", original_row
+            # new_df = pd.DataFrame([original_row, row])
+            # new_df = new_df.reset_index(drop=True)  # Sets index to 0, 1
+            
+            # mask = row.notna() & (row.astype(str).str.strip() != "")
+            # # mask
+            # original_row = original_row[mask]
+            # row = row[mask]
+
+            # new_df = pd.DataFrame({"old": original_row, "new": row})
+            # new_df = pd.DataFrame({
+            #     "old": original_row,
+            #     "new": row
+            # })
+            
+            # ----------------------------------------------------------
+           
+            priority_cols = ["namespace", "name"]
+
+            # Keep only the priority columns that actually exist
+            existing_priority = [c for c in priority_cols if c in original_row.index]
+
+            # Extract existing priority columns
+            priority_original = original_row[existing_priority]
+            priority_new = row[existing_priority]
+
+            # Other columns (exclude only the existing priority ones)
+            other_cols = original_row.index.difference(existing_priority)
+
+            # Mask only on the other columns
+            mask = row[other_cols].notna() & (row[other_cols].astype(str).str.strip() != "")
+
+            filtered_original = original_row[other_cols][mask]
+            filtered_new = row[other_cols][mask]
+
+            # Build final DataFrame
+            new_df = pd.DataFrame({
+                "old": pd.concat([priority_original, filtered_original]),
+                "new": pd.concat([priority_new, filtered_new])
+            })
+
+            # for col in new_df.select_dtypes(include=['object', 'string']):
+            #     new_df[col] = new_df[col].fillna("")
+            # new_df.loc[0] = new_df.loc[0].fillna("")
+            # new_df.loc[1] = new_df.loc[1].fillna("") 
+            dfs.append(new_df)
+            
+        for cc in modified_df.columns:
+            c_dtype = t_dtype.get(cc)
+            # if c_dtype == 'jsonb':
+            #     cc, c_dtype
+                
+        # t_dtype
     # schema_json = get_scheme_json_file('/Users/ogair/Projects/kdiff/kdiff-snapshots/data/kubernetes/kdiff-snp-2025-11-16--20-32/tables.structure.json')
     # print(json.dumps(schema_json, indent=2, default=str))
 
@@ -530,6 +585,7 @@ if auto_press_button or st.button("DIFF BABY DIFF", type='primary', width='stret
                 'color': 'black'
             })
             st.markdown("**Added::in-place**")
+            # added_df
             styled_added
         if not removed_df.empty: 
             styled_removed = removed_df.style.set_properties(**{
@@ -538,22 +594,9 @@ if auto_press_button or st.button("DIFF BABY DIFF", type='primary', width='stret
             })
             st.markdown("**Removed::in-place**")
             styled_removed
+            # removed_df
         
-        dfs=[]
-        for idx, row in modified_df.iterrows():
-            uid = row['uid']
-            original_row = df_A[df_A['uid'] == uid].iloc[0]
-            
-            # "row", row
-            # "original_row", original_row
-            new_df = pd.DataFrame([original_row, row])
-            new_df = new_df.reset_index(drop=True)  # Sets index to 0, 1
-            # for col in new_df.select_dtypes(include=['object', 'string']):
-            #     new_df[col] = new_df[col].fillna("")
-            # new_df.loc[0] = new_df.loc[0].fillna("")
-            # new_df.loc[1] = new_df.loc[1].fillna("") 
-            dfs.append(new_df)
-            
+
         # if not modified_df.empty: 
         #     sytled_modified = modified_df.style.set_properties(**{
         #         'background-color': "#5d55b1",  # light red
@@ -581,9 +624,9 @@ if auto_press_button or st.button("DIFF BABY DIFF", type='primary', width='stret
                 #     }
                 # )
                 # styled_print_df = print_df.T.style.apply(highlight_second_row, axis=0)
-                styled_print_df = print_df.style.apply(highlight_second_row, axis=0)
-                
-                styled_print_df
+                # styled_print_df = print_df.style.apply(highlight_second_row, axis=0)
+                # styled_print_df
+                print_df
     
 
 
