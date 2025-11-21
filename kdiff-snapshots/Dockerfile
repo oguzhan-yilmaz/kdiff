@@ -38,6 +38,7 @@ ENV PATH="/home/steampipe/.local/bin:${PATH}"
 COPY  --chown=steampipe:steampipe kdiff-snapshots-entrypoint.sh .
 COPY  --chown=steampipe:steampipe csv-script.sh .
 COPY  --chown=steampipe:steampipe start-and-wait-steampipe-service.sh .
+COPY  --chown=steampipe:steampipe snapshot-config.yaml .
 
 RUN ls && ls / && ls /home/steampipe
 RUN chmod +x *.sh
