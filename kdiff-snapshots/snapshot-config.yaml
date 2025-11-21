@@ -8,6 +8,7 @@ plugins:
       - aws_keyspaces_keyspace
       - aws_keyspaces_table
       - aws_resource_explorer_index
+      - aws_ssm_inventory
       - aws_ssm_inventory_entry
       - aws_codedeploy_deployment_config
       - aws_ssm_document
