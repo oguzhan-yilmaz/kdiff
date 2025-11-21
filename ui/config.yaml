@@ -63,7 +63,7 @@ plugins:
         hide_columns: [id, ]
 
   aws:
-    divide_columns: [account, region, ]
+    divide_columns: [region, ]
     tables:
       post:
         unique_columns: [arn, ]

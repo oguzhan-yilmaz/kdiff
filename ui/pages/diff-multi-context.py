@@ -551,12 +551,12 @@ if auto_press_button or st.button("DIFF BABY DIFF", type='primary', width='stret
             mask = row[other_cols].notna() & (row[other_cols].astype(str).str.strip() != "")
 
             filtered_original = original_row[other_cols][mask]
-            filtered_new = row[other_cols][mask]
+            filtered_new = row[other_cols][mask].fillna("") 
 
             # Build final DataFrame
             new_df = pd.DataFrame({
-                "old": pd.concat([priority_original, filtered_original]),
-                "new": pd.concat([priority_new, filtered_new])
+                "original": pd.concat([priority_original, filtered_original]),
+                "changes": pd.concat([priority_new, filtered_new])
             })
 
             # for col in new_df.select_dtypes(include=['object', 'string']):
@@ -567,8 +567,8 @@ if auto_press_button or st.button("DIFF BABY DIFF", type='primary', width='stret
             
         for cc in modified_df.columns:
             c_dtype = t_dtype.get(cc)
-            # if c_dtype == 'jsonb':
-            #     cc, c_dtype
+            if c_dtype == 'jsonb':
+                cc, c_dtype
                 
         # t_dtype
     # schema_json = get_scheme_json_file('/Users/ogair/Projects/kdiff/kdiff-snapshots/data/kubernetes/kdiff-snp-2025-11-16--20-32/tables.structure.json')
