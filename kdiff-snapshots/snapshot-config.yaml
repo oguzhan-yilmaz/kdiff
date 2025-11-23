@@ -1,10 +1,20 @@
 plugins:
   _plugin_name:
+    extra_sql:
+      _table_name:
+        aws_iam_policy: WHERE
     exclude_tables:
       - ""
 
   aws:
+    extra_sql:
+      aws_iam_policy: WHERE is_aws_managed=false
+      aws_cloudfront_response_headers_policy: WHERE type!='managed'
+      aws_route53_resolver_rule: WHERE owner_id!='Route 53 Resolver'
+      aws_ec2_ami_shared: WHERE owner_id = 'self'
+      
     exclude_tables:
+      - aws_wellarchitected_lens_review_improvement
       - aws_keyspaces_keyspace
       - aws_keyspaces_table
       - aws_resource_explorer_index

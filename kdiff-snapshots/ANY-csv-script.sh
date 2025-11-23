@@ -68,8 +68,8 @@ mkdir -p "$OUT_DIR"
 log_info "Output directory: $OUT_DIR"
 
 # ======= Query Tables =======
-log_debug "Querying ${STEAMPIPE_PLUGIN_NAME} tables with limit: ${SQL_LIMIT_STR:-N/A}"
-tables_sql="SELECT table_name FROM information_schema.tables WHERE table_schema='${STEAMPIPE_PLUGIN_NAME}' $SQL_LIMIT_STR"
+log_debug "Querying ${STEAMPIPE_PLUGIN_NAME} tables"
+tables_sql="SELECT table_name FROM information_schema.tables WHERE table_schema='${STEAMPIPE_PLUGIN_NAME}' ORDER BY table_name"
 log_debug "Tables SQL query: $tables_sql"
 # Add retries and delay to ensure steampipe service is ready
 k8s_tables_max_retries=5
@@ -116,17 +116,32 @@ for table in $tables; do
     fi
 
     out_file="${OUT_DIR}/${table}.csv"
+
+
+    extra_sql_for_table=$(yq ".plugins.${STEAMPIPE_PLUGIN_NAME}.extra_sql.\"$table\"" snapshot-config.yaml)
+
     sql_query="SELECT * FROM ${STEAMPIPE_PLUGIN_NAME}.$table"
+
+    if [[ "$extra_sql_for_table" != "null" ]]; then
+        log_debug "Found: extra_sql_for_table: $table: $extra_sql_for_table"
+        sql_query="SELECT * FROM ${STEAMPIPE_PLUGIN_NAME}.$table $extra_sql_for_table"
+        # do something with $extra_sql_for_table
+    fi
+
     log_info "Processing: $table"
-    log_debug "Processing table: $table -- SQL query: $sql_query"
+    # log_debug "Processing table: $table -- SQL query: $sql_query"
+    log_info "Processing table: $table -- SQL query: $sql_query"
     if [ -z "$sql_query" ]; then
         log_warning "Empty SQL query for table $table, skipping..."
         continue
     fi
 
     if ! steampipe query --output csv "$sql_query" > "$out_file" 2>/dev/null; then
-        log_warning "Failed to query table $table, skipping..."
-        continue
+        log_warning "Some errors while fetching the $table ..."
+        # log_debug "$(steampipe query --output csv "$sql_query")"
+        # log_debug "--------"
+        # log_debug "$(cat $out_file)"
+        # continue
     fi
 
     # have the file get deleted if produced no results(1 line file) and continue
@@ -141,7 +156,8 @@ for table in $tables; do
     # Get table metadata
     metadata_out_file="${OUT_DIR}/_table_metadata/${table}.metadata.json"
     metadata_sql_query="SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema = '${STEAMPIPE_PLUGIN_NAME}' AND table_name = '$table'"
-    log_debug "Fetching metadata for table: $table -- Output file: $metadata_out_file"
+    # log_debug "Fetching metadata for table: $table -- Output file: $metadata_out_file"
+    log_debug "Fetching metadata for table: $table"
     if ! steampipe query --output json "$metadata_sql_query" > "$metadata_out_file" 2>/dev/null; then
         log_warning "Failed to query metadata for table $table, skipping..."
     fi
