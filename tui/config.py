@@ -2,7 +2,13 @@ import yaml
 import boto3
 import os
 from dotenv import load_dotenv
+import logging
+from textual.logging import TextualHandler
 
+logging.basicConfig(
+    level="NOTSET",
+    handlers=[TextualHandler()],
+)
 load_dotenv()
 
 

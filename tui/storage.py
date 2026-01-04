@@ -6,7 +6,6 @@ import json
 from datetime import datetime
 from typing import Dict, List
 from s3_and_local_files import run_aws_cli_sync
-import streamlit as st
 
 # Create an S3 client
 s3_client = boto3_session.client("s3")
