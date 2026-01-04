@@ -5,7 +5,6 @@ from storage import *
 from pathlib import Path
 import json
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder
 
 
 # # Main page content
