@@ -1,0 +1,71 @@
+plugins:
+
+
+  # example conf: 
+  plugin_name:
+    divide_columns: []
+    diffs:
+      unique_column: ""
+    _default: 
+      hide_columns: [sp_ctx, _ctx, source_type]
+    tables:
+      table_name:
+        unique_columns: [id, ]
+        show_first: [id, ]
+        hide_columns: [id, ]
+
+  docker:
+    divide_columns: []
+    diffs:
+      unique_column: "id"
+    _default: 
+      hide_columns: [sp_ctx, _ctx, source_type]
+    tables:
+      container:
+        unique_columns: [id, ]
+        show_first: [names, image, state, status, command]
+        # hide_columns: [id, ]
+      volume:
+        unique_columns: [name, ]
+        show_first: [name, mountpoint, labels, driver]
+      network:
+        unique_columns: [id, ]  
+        show_first: [name, driver, labels, options, scope, created, ]
+      image:
+        unique_columns: [id, ]  
+        show_first: [repo_tags, size, labels, ]
+      info:
+        unique_columns: [id, ]  
+        show_first: [architecture, containers, containers_running, containers_stopped, containers_paused]
+        # hide_columns: [id, ]
+  kubernetes:
+    divide_columns: [namespace]
+    diffs:
+      unique_column: "uid"
+    _default: 
+      hide_columns: [sp_ctx, _ctx, source_type]
+    tables:
+      node:
+        unique_columns: [uid, ]
+        show_first: [uid, ]
+        hide_columns: [uid, ]
+      stateful_set:
+        unique_columns: [namespace, name]
+        show_first: [namespace, name]
+        hide_columns: [uid, ]
+                
+  hackernews:
+    divide_columns: []
+    tables:
+      post:
+        unique_columns: [id, ]
+        show_first: [id, ]
+        hide_columns: [id, ]
+
+  aws:
+    divide_columns: [region, ]
+    tables:
+      post:
+        unique_columns: [arn, ]
+        show_first: [arn, ]
+        hide_columns: [arn, ]
