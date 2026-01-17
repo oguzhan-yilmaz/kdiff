@@ -1,156 +1,154 @@
-from datetime import datetime
+import pandas as pd
 import streamlit as st
-from config import boto3_session
-from storage import *
-from pathlib import Path
-import json
-import pandas as pd
 
 
-# # Main page content
-# st.markdown("# List of snapshots on remote S3")
-# st.sidebar.markdown("## List of snapshots on remote S3")
-# # print(dir(bucket))
-# # print('-'*20)
-# # print(dir(bucket.Tagging))
-# # print(bucket.bucket_arn, bucket.bucket_region, bucket.creation_date)
-# # print(bucket.get_available_subresources())
-
-# def main():
-#     s3_snapshot_dirs = get_kdiff_snapshot_metadata_files('test-bucket')
-#     # print(s3_snapshot_dirs)
-#     snapshot_list = []
-
-#     for mf in s3_snapshot_dirs:
-#         data =mf['metadata_json']
-
-#         snapshot_info = data.get("snapshotInfo", {})
-#         cli_versions = data.get("cliVersions", {})
-#         checksums = data.get("checksums", {})
-
-#         # Parse timestamp string into datetime object
-#         timestamp = snapshot_info.get("timestamp")
-#         timestamp_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-
-#         snapshot_list.append({
-#             "Timestamp": timestamp_dt,
-#             # "Hostname": snapshot_info.get("hostname"),
-#             "Output Directory": snapshot_info.get("output_directory"),
-#             "S3 Bucket": snapshot_info.get("s3_bucket_name"),
-#             "File Count": len(checksums),
-#             # "kubectl Version": cli_versions.get("kubectl"),
-#             # "AWS CLI Version": cli_versions.get("aws"),
-#             # "Steampipe Version": cli_versions.get("steampipe")
-#         })
-
-#     df_snapshots = pd.DataFrame(snapshot_list)
-
-#     # --- Date range filter ---
-#     min_date = df_snapshots['Timestamp'].min().date()
-#     max_date = df_snapshots['Timestamp'].max().date()
-#     selected_range = st.sidebar.date_input(
-#         "Filter snapshots by date",
-#         value=(min_date, max_date),
-#         min_value=min_date,
-#         max_value=max_date
-#     )
-
-#     # Filter DataFrame by selected date range
-#     if isinstance(selected_range, tuple) and len(selected_range) == 2:
-#         start_date, end_date = selected_range
-#         df_snapshots = df_snapshots[
-#             (df_snapshots['Timestamp'].dt.date >= start_date) &
-#             (df_snapshots['Timestamp'].dt.date <= end_date)
-#         ]
-
-#     # --- Interactive table ---
-#     gb = GridOptionsBuilder.from_dataframe(df_snapshots)
-#     gb.configure_default_column(sortable=True, filter=True)
-#     gb.configure_selection(selection_mode="single", use_checkbox=True)
-#     grid_options = gb.build()
-
-#     AgGrid(df_snapshots, gridOptions=grid_options, height=400, fit_columns_on_grid_load=True)
-
-# if __name__ == '__main__':
-#     main()
-
-
-
-
-
-
-
-
-
-import subprocess
-import pandas as pd
-import yaml
-import tempfile
-
-# ----------------------------------------------------
-# 1. Create two YAML strings
-# ----------------------------------------------------
-yaml_a = """
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: example
-data:
-  key1: value1
-  key2: value2
-  key3: |
-    eeeee--------------------------
-    aaaa
-    bbbb
-    ddddd---------------------
+def generate_complex_html(df, group_col, data_cols, note_col, table_class="custom-table"):
+    """
+    Generates HTML for a table where:
+    1. group_col spans vertically across all its data rows + 1 note row.
+    2. data_cols are rendered as normal rows.
+    3. note_col is rendered as the final row for that group, spanning the data_cols.
+    """
+    
+    # Start the table structure
+    # We define headers based on the column names passed
+    headers = [group_col] + data_cols
+    header_html = "".join(f"<th>{h}</th>" for h in headers)
+    
+    html = f"""
+    <table class="{table_class}">
+        <thead>
+            <tr>{header_html}</tr>
+        </thead>
+        <tbody>
+    """
+    
+    # Group the dataframe by the main identifier (e.g., Project)
+    # preserve_order ensures we output in the same order they appear
+    groups = df[group_col].unique()
+    
+    for group_id in groups:
+        # Get the subset of data for this group
+        sub_df = df[df[group_col] == group_id]
+        
+        # Extract the Note (assuming it's the same for the whole group, take the first one)
+        # If your note varies by row, you might want to join them or take the unique one.
+        note_text = sub_df[note_col].iloc[0]
+        
+        # Calculate Rowspan: Number of data rows + 1 (for the note row)
+        rowspan = len(sub_df) + 1
+        
+        # Iterate through the data rows
+        for i, (_, row) in enumerate(sub_df.iterrows()):
+            html += "<tr>"
+            
+            # 1. Render Group ID (Only on the very first row of the group)
+            if i == 0:
+                html += f'<td rowspan="{rowspan}" class="main-col">{group_id}</td>'
+            
+            # 2. Render Data Columns
+            for col in data_cols:
+                html += f"<td>{row[col]}</td>"
+                
+            html += "</tr>"
+            
+        # 3. Render the Note Row (Spans across all data columns)
+        # colspan is equal to the number of data columns
+        html += f"""
+        <tr>
+            <td colspan="{len(data_cols)}" class="note-row">{note_text}</td>
+        </tr>
+        """
+        
+    html += "</tbody></table>"
+    
+    return html
+  
+  
+  
+# 1. Define the CSS (You only need to do this once)
+css = """
+<style>
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: sans-serif;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    .report-table th {
+        # background-color: #f0f2f6;
+        text-align: left;
+        padding: 12px;
+        border-bottom: 2px solid #ddd;
+    }
+    .report-table td {
+        border: 1px solid #e0e0e0;
+        padding: 10px;
+        vertical-align: top;
+    }
+    /* The merged ID column */
+    .main-col {
+        # background-color: #fafafa;
+        font-weight: bold;
+        vertical-align: middle;
+        width: 150px;
+        text-align: center;
+    }
+    /* The large text note at the bottom */
+    .note-row {
+        background-color: #fff9c4;
+        color: #555;
+        font-style: italic;
+        padding: 10px;
+        border-top: 2px dashed #e0e0e0 !important; /* Visual separation */
+    }
+</style>
 """
 
-yaml_b = """
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: example
-data:
-  key1: value1-changed
-  key3: |
-    aaaa
-    bbbb
-    ccccc--------------------------
-    ddddd---------------------
-"""
+# 2. Create your DataFrame (Flat format)
+data = [
+    # Group 1
+    {"Project": "Alpha", "Task": "Design UI",     "Status": "Done",    "Comments": "<b>Warning:</b> QA team is understaffed."},
+    {"Project": "Alpha", "Task": "Backend API",   "Status": "Pending", "Comments": "<b>Warning:</b> QA team is understaffed."},
+    # Group 2
+    {"Project": "Beta",  "Task": "Database Mig",  "Status": "Done",    "Comments": "All looks good."},
+    {"Project": "Beta",  "Task": "Testing",       "Status": "Done",    "Comments": "All looks good."},
+    {"Project": "Beta",  "Task": "Deploy",        "Status": "Review",  "Comments": "All looks good."},
+]
+df = pd.DataFrame(data)
 
-# ----------------------------------------------------
-# 2. Write them to temporary files
-# ----------------------------------------------------
-with tempfile.NamedTemporaryFile(delete=False, suffix=".yaml") as f1:
-    f1.write(yaml_a.encode())
-    file_a = f1.name
-
-with tempfile.NamedTemporaryFile(delete=False, suffix=".yaml") as f2:
-    f2.write(yaml_b.encode())
-    file_b = f2.name
-
-# ----------------------------------------------------
-# 3. Run `dyff between`
-# ----------------------------------------------------
-process = subprocess.run(
-    # 
-    ["dyff",  "between","-w", "40", "-g", "--ignore-order-changes","--no-table-style", "-o","human", "--omit-header", file_a, file_b],
-    capture_output=True,
-    text=True
+# 3. Generate HTML
+html_output = generate_complex_html(
+    df=df,
+    group_col="Project",      # The column to merge vertically
+    data_cols=["Task", "Status"], # The columns to list individually
+    note_col="Comments",      # The column to put in the bottom row
+    table_class="report-table"
 )
 
-diff_output = process.stdout
-print("=== dyff raw output ===")
-print(diff_output)
+# 4. Render
+st.markdown(css, unsafe_allow_html=True)
+st.markdown(html_output, unsafe_allow_html=True)
 
-diff_output = '# header\n' + diff_output
-# ----------------------------------------------------
-# 4. Parse dyff output → DataFrame
-# ----------------------------------------------------
-# dyff output is human-readable, so for structured data we extract lines
-df = pd.DataFrame([diff_output])
 
-print("\n=== Parsed DataFrame ===")
-print(df)
-df
+
+owinners_df = pd.read_json("https://www.ag-grid.com/example-assets/olympic-winners.json")
+sample_df = owinners_df.sample(10)
+
+
+sample_df
+# 3. Generate HTML
+html_output = generate_complex_html(
+    df=df,
+    group_col="country",      # The column to merge vertically
+    # data_cols=["Task", "Status"], # The columns to list individually
+    data_cols=[], # The columns to list individually
+    note_col="Comments",      # The column to put in the bottom row
+    table_class="report-table"
+)
+
+# 4. Render
+st.markdown(css, unsafe_allow_html=True)
+st.markdown(html_output, unsafe_allow_html=True)
+
