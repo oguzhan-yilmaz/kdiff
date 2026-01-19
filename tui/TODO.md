@@ -1,0 +1,4 @@
+- LinesAPI https://textual.textualize.io/guide/widgets/#__tabbed_7_3
+- screen api
+- screen api :: modal screen
+- https://textual.textualize.io/guide/screens/#__tabbed_6_2 :: switch Modes :: many screens with d,s,h keybinds

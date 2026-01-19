@@ -212,8 +212,8 @@ st.header("4. Complex Layout Example")
 
 data4 = {
     'Project': ['Website', '', '', '', 'Mobile App', '', 'Backend'],
-    'Phase': ['Design', '', 'Development', '', 'Design', 'Development', 'API'],
-    'Task': ['Wireframes', 'Mockups', 'Frontend', 'Backend', 'UI/UX', 'Implementation', 'REST API'],
+    'Phase': ['Design', '', 'Development'*10, '', 'Design', 'Development', 'API'],
+    'Task': ['Wireframes', 'Mockups', 'Frontend', 'Backend '*10, 'UI/UX', 'Implementation '*10, 'REST API'],
     'Hours': [40, 60, 120, 100, 80, 200, 150],
     'Status': ['Done', 'Done', 'In Progress', '', 'Done', 'In Progress', 'Planning']
 }

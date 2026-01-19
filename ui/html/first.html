@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootstrap Table with Splittable Rows</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Employee Schedule Table</h2>
+        
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Employee Name</th>
+                    <th>Department</th>
+                    <th>Day</th>
+                    <th>Shift Time</th>
+                    <th>Task</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Regular row -->
+                <tr>
+                    <td>John Smith</td>
+                    <td>IT</td>
+                    <td>Monday</td>
+                    <td>9:00 AM - 5:00 PM</td>
+                    <td>Server Maintenance</td>
+                </tr>
+                
+                <!-- Splittable row - Employee and Department span 2 rows -->
+                <tr>
+                    <td rowspan="2">Sarah Johnson</td>
+                    <td rowspan="2">Marketing</td>
+                    <td>Tuesday</td>
+                    <td>8:00 AM - 12:00 PM</td>
+                    <td>Campaign Planning</td>
+                </tr>
+                <tr>
+                    <td>Tuesday</td>
+                    <td>1:00 PM - 5:00 PM</td>
+                    <td>Client Meeting</td>
+                </tr>
+                
+                <!-- Regular row -->
+                <tr>
+                    <td>Mike Davis</td>
+                    <td>Sales</td>
+                    <td>Wednesday</td>
+                    <td>10:00 AM - 6:00 PM</td>
+                    <td>Sales Calls</td>
+                </tr>
+                
+                <!-- Splittable row - Employee and Department span 3 rows -->
+                <tr>
+                    <td rowspan="3">Emily Chen</td>
+                    <td rowspan="3">Development</td>
+                    <td>Thursday</td>
+                    <td>9:00 AM - 11:00 AM</td>
+                    <td>Code Review</td>
+                </tr>
+                <tr>
+                    <td>Thursday</td>
+                    <td>11:00 AM - 1:00 PM</td>
+                    <td>Feature Development</td>
+                </tr>
+                <tr>
+                    <td>Thursday</td>
+                    <td>2:00 PM - 5:00 PM</td>
+                    <td>Testing</td>
+                </tr>
+                
+                <!-- Regular row -->
+                <tr>
+                    <td>Robert Wilson</td>
+                    <td>HR</td>
+                    <td>Friday</td>
+                    <td>9:00 AM - 5:00 PM</td>
+                    <td>Interviews</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-info mt-4">
+            <strong>Note:</strong> The rows for Sarah Johnson and Emily Chen demonstrate splittable rows where the Employee Name and Department columns span multiple rows using the <code>rowspan</code> attribute, while other columns are split across separate rows.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

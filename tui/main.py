@@ -2,16 +2,27 @@
 from config import ui_config, boto3_session
 from storage import *
 # -- tui imports
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, RenderResult
 from textual.screen import Screen
 from textual.widgets import Footer, Placeholder
-
+from textual.widget import Widget
 print("Hello from tui!")
 s3_remote_available_plugins = list_folders(bucket_name, snapshots_s3_prefix)
 print(s3_remote_available_plugins)
 
+
+
+
+
+class Hello(Widget):
+    """Display a greeting."""
+
+    def render(self) -> RenderResult:
+        return "Hello, [b]World[/b]!"
+
 class DashboardScreen(Screen):
     def compose(self) -> ComposeResult:
+        yield Hello()
         yield Placeholder("Dashboard Screen")
         yield Footer()
 
@@ -41,7 +52,7 @@ class ModesApp(App):
     }
 
     def on_mount(self) -> None:
-        # self.switch_mode("dashboard")  
+        self.switch_mode("dashboard")  
         pass
 
 if __name__ == "__main__":
