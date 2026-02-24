@@ -15,7 +15,7 @@ ideas.md
 kdiff-snapshots/my-values.yaml
 _data/
 .old-entry
-
+archive-ui/
 
 ### ------- auto gen - start ------- ###
 # Byte-compiled / optimized / DLL files
@@ -233,3 +233,8 @@ ui/pages/testtt.py
 qsv-testing/README.md
 kdiff-snapshots/inflate.yml
 kdiff-snapshots/a.yaml
+ui/pages/aii
+.gitignore
+ui/pages/aiii
+ui/pages/ai
+qsv-testing/README.md

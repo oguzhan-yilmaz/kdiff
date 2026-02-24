@@ -37,3 +37,8 @@ qsv diff /Users/ogair/tmp-kdiff-snapshots-sync/snps/kdiff-snapshot-2025-11-06--1
 
 cat /Users/ogair/tmp-kdiff-snapshots-sync/snps/kdiff-snapshot-2025-11-06--15-04/kubernetes_pod.csv
 code /Users/ogair/tmp-kdiff-snapshots-sync/snps/kdiff-snapshot-2025-11-06--15-08/kubernetes_pod.csv 
+
+
+
+
+qsv diff --drop-equal-fields --key uid /Users/ogair/Projects/kdiff/kdiff-snapshots/data/kubernetes/kdiff-snp-2025-11-21--12-51/kubernetes_pod.csv /Users/ogair/Projects/kdiff/kdiff-snapshots/data/kubernetes/kdiff-snp-2025-11-16--20-32/kubernetes_pod.csv | csvlens
