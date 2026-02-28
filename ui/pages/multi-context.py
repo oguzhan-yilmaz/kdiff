@@ -129,7 +129,12 @@ with col3:
 dividers = selected_snapshot.get('dividers', {})
 # st.markdown('#### dividers found')
 connection_values = dividers.get('sp_connection_name', [])
-sp_connection_selected = st.sidebar.radio('**SP Connection**',options=connection_values,)
+st.sidebar.markdown('**SP Connection**')
+sp_connection_selected = []
+for i, conn in enumerate(connection_values):
+    default = True
+    if st.sidebar.checkbox(conn, value=default, key=f"sp_conn_{i}"):
+        sp_connection_selected.append(conn)
 
 
 # -- WIDGET object kinds
@@ -247,18 +252,19 @@ def get_snapshot_data(snapshot: pd.DataFrame) -> List[Dict]:
 
 
 # ------------ SCRIPT STARTS HERE
-st.markdown(f"#### plugin:{plugin_name} connection:{sp_connection_selected} namespace:{1}")
+st.markdown(f"#### plugin:{plugin_name} connection:{', '.join(sp_connection_selected) if sp_connection_selected else '—'} namespace:{1}")
 
 snapshot_data_list = get_snapshot_data(selected_snapshot)
 # TODO: if json-array: kind:List,version:v1,items:[] format to better table show
 
 # -- FILTER dataframes by sp_connection_name (context)
-if sp_connection_selected:
+# Skip filtering when all connections are selected (no filtering needed)
+if sp_connection_selected and set(sp_connection_selected) != set(connection_values):
     for snp_df_item in snapshot_data_list:
         # snp_df_item
         table_name = snp_df_item['tablename']
         snp_df = snp_df_item['dataframe']
-        new_snp_df = snp_df[snp_df['sp_connection_name'] == sp_connection_selected]
+        new_snp_df = snp_df[snp_df['sp_connection_name'].isin(sp_connection_selected)]
         snp_df_item['dataframe'] = new_snp_df
 
     
