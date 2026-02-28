@@ -17,6 +17,7 @@ except ValueError as e:
 from typing import List, DefaultDict, Dict
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import unquote
 import json
 import pandas as pd
 
@@ -29,9 +30,15 @@ row_height_slider = None
 # --------- / init params ---------
 
 s3_remote_available_plugins = list_folders(bucket_name, snapshots_s3_prefix)
+query_plugin = unquote(st.query_params.get("plugin", ""))
+query_snapshot = unquote(st.query_params.get("snapshot", ""))
+default_plugin_index = 0
+if query_plugin and query_plugin in s3_remote_available_plugins:
+    default_plugin_index = s3_remote_available_plugins.index(query_plugin)
+
 sidebar_plugin_param = st.sidebar.radio(
-        "Plugin Name",s3_remote_available_plugins,
-        index=0,
+        "Plugin Name", s3_remote_available_plugins,
+        index=default_plugin_index,
         format_func=lambda a: f"**{a}**"
     )
 
@@ -51,50 +58,53 @@ s3_snapshots_df = pd.DataFrame(s3_snapshots)
 
 def set_sidebar_params():
     # ---- SIDEBAR PARAMS ----
-    # st.markdown("# set_sidebar_params")
-    
-
-    # snapshot_list
-    # s3_snapshots
     if not s3_snapshots:
-        {"failed": "s3_snapshots empty", "s3_snapshots": s3_snapshots}
         st.sidebar.markdown(f"No snapshots are found")
         st.exception(f"No snapshots are found for {sidebar_plugin_param}")
-            
+        return None
+
     # Extract date and time columns
     s3_snapshots_df["date"] = s3_snapshots_df["timestampObj"].dt.date
     s3_snapshots_df["time"] = s3_snapshots_df["timestampObj"].dt.strftime("%H:%M:%S")
 
-    # --- Sidebar DATE selector ---
-    unique_dates = sorted(s3_snapshots_df["date"].unique())
+    # Default from query params when plugin matches
+    default_date = None
+    default_time = None
+    if query_snapshot and sidebar_plugin_param == query_plugin:
+        match = s3_snapshots_df[s3_snapshots_df["snapshot_name"] == query_snapshot]
+        if not match.empty:
+            row = match.iloc[0]
+            default_date = row["date"]
+            default_time = row["time"]
 
-    # unique_dates
+    unique_dates = sorted(s3_snapshots_df["date"].unique())
+    default_date = default_date or unique_dates[-1]
 
     selected_date = st.sidebar.date_input(
         "Select a snapshot date",
-        value=unique_dates[-1],            # default = latest date
+        value=default_date,
         min_value=min(unique_dates),
         max_value=max(unique_dates),
     )
 
-    # --- Filter snapshots for the selected date ---
     df_for_date = s3_snapshots_df[s3_snapshots_df["date"] == selected_date]
-
-    # Show times belonging to that date
     time_options = df_for_date["time"].tolist()
+    default_time = default_time if default_time in time_options else time_options[0] if time_options else None
 
     selected_time = st.sidebar.selectbox(
         "Select a snapshot time",
         options=time_options,
+        index=time_options.index(default_time) if default_time and default_time in time_options else 0,
         key="selected_time"
     )
 
-    # --- Find the selected snapshot row ---
     selected_snapshot = df_for_date[df_for_date["time"] == selected_time].iloc[0]
     return selected_snapshot
 
 
 selected_snapshot = set_sidebar_params()
+if selected_snapshot is None:
+    st.stop()
 
 col1, col2, col3 = st.columns([4, 2, 1])
 
