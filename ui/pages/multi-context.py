@@ -80,12 +80,17 @@ def set_sidebar_params():
     unique_dates = sorted(s3_snapshots_df["date"].unique())
     default_date = default_date or unique_dates[-1]
 
-    selected_date = st.sidebar.date_input(
+    date_options = [d.strftime("%Y-%m-%d") for d in unique_dates]
+    default_date_str = default_date.strftime("%Y-%m-%d")
+    default_date_index = date_options.index(default_date_str) if default_date_str in date_options else len(date_options) - 1
+
+    selected_date_str = st.sidebar.selectbox(
         "Select a snapshot date",
-        value=default_date,
-        min_value=min(unique_dates),
-        max_value=max(unique_dates),
+        options=date_options,
+        index=default_date_index,
+        key="selected_date",
     )
+    selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
 
     df_for_date = s3_snapshots_df[s3_snapshots_df["date"] == selected_date]
     time_options = df_for_date["time"].tolist()
