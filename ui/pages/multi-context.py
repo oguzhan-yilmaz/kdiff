@@ -106,6 +106,10 @@ selected_snapshot = set_sidebar_params()
 if selected_snapshot is None:
     st.stop()
 
+# Sync sidebar selections to URL params for shareable links
+st.query_params["plugin"] = sidebar_plugin_param
+st.query_params["snapshot"] = str(selected_snapshot["snapshot_name"])
+
 col1, col2, col3 = st.columns([4, 2, 1])
 
 # -- WIDGET right-most column for view settings 
