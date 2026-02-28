@@ -1,6 +1,7 @@
 """
 KDiff Backup Dashboard — Main page showing current S3 backup status per plugin.
 """
+from datetime import datetime, timezone
 from urllib.parse import quote
 
 import pandas as pd
@@ -35,19 +36,33 @@ if not s3_plugins:
     st.warning(f"No plugin folders found in s3://{bucket_name}/{snapshots_s3_prefix}")
     st.stop()
 
-# Summary: which plugins have backups, counts, latest
+# Summary: which plugins have backups, counts, days since latest
 backup_rows = []
+now = datetime.now(timezone.utc)
 for plugin in sorted(s3_plugins):
     snapshots = get_kdiff_snapshot_metadata_files_for_plugin(bucket_name, plugin)
     count = len(snapshots)
     latest = max(snapshots, key=lambda s: s["timestampObj"]) if snapshots else None
+    latest_ts = latest["timestampObj"] if latest else None
+    days_ago = (now - latest_ts).days if latest_ts else None
     backup_rows.append({
         "Plugin": plugin,
         "Backup count": count,
-        "Latest backup": latest["display_date"] + " " + latest["display_time"] if latest else "—",
+        "days_ago": days_ago,
     })
 
-st.dataframe(backup_rows, use_container_width=True, hide_index=True)
+n_cols = min(5, len(backup_rows))
+cols = st.columns(n_cols)
+for i, row in enumerate(backup_rows):
+    with cols[i % n_cols]:
+        days_ago = row["days_ago"]
+        if days_ago is not None:
+            days_display = max(0, days_ago)
+            days_label = f"latest {days_display} day{'s' if days_display != 1 else ''} ago"
+        else:
+            days_label = "No backups"
+        st.metric(label=row["Plugin"], value=f"{row['Backup count']} backups")
+        st.caption(days_label)
 
 # Backups per plugin as data tables
 st.subheader("Backups per plugin")
