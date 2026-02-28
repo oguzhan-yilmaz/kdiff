@@ -1,8 +1,7 @@
 plugins:
   _plugin_name:
     extra_sql:
-      _table_name:
-        aws_iam_policy: WHERE
+      aws_iam_policy: WHERE id=1
     exclude_tables:
       - ""
 

@@ -23,7 +23,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application code
-COPY streamlit_app.py config.yaml ./
+COPY streamlit_app.py plugin-config.yaml ./
 COPY pages/ pages/
 COPY config.py storage.py diff_csv.py misc.py s3_and_local_files.py ./
 

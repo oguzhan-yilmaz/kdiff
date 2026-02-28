@@ -34,6 +34,6 @@ s3_client_args = {
 boto3_session = boto3.session.Session(**s3_client_args)
 
 ui_config = {}
-with open('config.yaml', 'r') as f:
+with open('plugin-config.yaml', 'r') as f:
     ui_config = yaml.safe_load(f)
 
