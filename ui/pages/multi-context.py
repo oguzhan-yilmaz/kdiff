@@ -1,11 +1,21 @@
-
 import streamlit as st
+
 st.set_page_config(layout="wide")
+
+try:
+    from config import boto3_session, bucket_name, ui_config, snapshots_s3_prefix
+    from storage import *
+except ValueError as e:
+    st.error("Configuration error")
+    st.error(str(e))
+    st.info(
+        "Please set the **BUCKET_NAME** environment variable to connect to your S3 bucket. "
+        "You can also set **AWS_ACCESS_KEY_ID**, **AWS_SECRET_ACCESS_KEY**, and **AWS_DEFAULT_REGION** if needed."
+    )
+    st.stop()
 
 from typing import List, DefaultDict, Dict
 from datetime import datetime
-from config import boto3_session, bucket_name, ui_config, snapshots_s3_prefix
-from storage import *
 from pathlib import Path
 import json
 import pandas as pd

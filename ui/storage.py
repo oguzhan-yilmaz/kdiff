@@ -3,10 +3,15 @@ from functools import lru_cache
 from pathlib import Path
 from io import BytesIO
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List
 from s3_and_local_files import run_aws_cli_sync
 import streamlit as st
+
+if not bucket_name or not str(bucket_name).strip():
+    raise ValueError(
+        "S3 bucket name is not configured. Please set the BUCKET_NAME environment variable."
+    )
 
 # Create an S3 client
 s3_client = boto3_session.client("s3")
@@ -129,9 +134,14 @@ def get_kdiff_snapshot_metadata_files_for_plugin(bucket, plugin_name):
             snapshot_info = mjson.get("snapshotInfo", {})
             timestamp = snapshot_info.get("timestamp")
             timestamp_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            # S3 LastModified is when the object was uploaded to S3 (naive UTC from S3 API)
+            s3_last_modified = md_object.get("LastModified")
+            if s3_last_modified and s3_last_modified.tzinfo is None:
+                s3_last_modified = s3_last_modified.replace(tzinfo=timezone.utc)
             entry = {
-                'bucket': bucket, 
+                'bucket': bucket,
                 'timestampObj': timestamp_dt,
+                's3_last_modified': s3_last_modified,
                 'filepath': str(md_path),
                 'plugin_name': plugin_name,
                 "display_date": f"{timestamp_dt.strftime('%Y-%m-%d')}",
