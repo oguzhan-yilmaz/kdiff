@@ -1,0 +1,16 @@
+<nav aria-label="Plugins">
+  <ul class="plugin-list">
+    {% for p in plugins %}
+    <li>
+      <a
+        href="#"
+        hx-get="/partials/snapshots?plugin={{ p | urlencode }}"
+        hx-target="#main"
+        hx-push-url="true"
+      >{{ p }}</a>
+    </li>
+    {% else %}
+    <li class="muted" style="padding: 0.5rem 1rem;">No plugins found</li>
+    {% endfor %}
+  </ul>
+</nav>

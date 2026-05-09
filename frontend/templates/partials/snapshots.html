@@ -1,0 +1,18 @@
+<div class="panel">
+  <h2>Snapshots — {{ plugin }}</h2>
+  <p class="muted">Newest first (parsed from folder name).</p>
+  <ul class="snap-list">
+    {% for s in snapshots %}
+    <li>
+      <a
+        href="#"
+        hx-get="/partials/files?plugin={{ plugin | urlencode }}&snapshot={{ s.name | urlencode }}"
+        hx-target="#main"
+        hx-push-url="true"
+      >{{ s.name }}</a>
+    </li>
+    {% else %}
+    <li class="muted">No snapshots for this plugin.</li>
+    {% endfor %}
+  </ul>
+</div>

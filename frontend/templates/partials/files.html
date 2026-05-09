@@ -1,0 +1,17 @@
+<div class="panel">
+  <h2>Files — {{ plugin }} / {{ snapshot }}</h2>
+  <ul class="file-list">
+    {% for f in files %}
+    <li>
+      <a
+        href="#"
+        hx-get="/partials/csv?plugin={{ plugin | urlencode }}&snapshot={{ snapshot | urlencode }}&file={{ f | urlencode }}&offset=0"
+        hx-target="#main"
+        hx-push-url="true"
+      >{{ f }}</a>
+    </li>
+    {% else %}
+    <li class="muted">No CSV files in this snapshot.</li>
+    {% endfor %}
+  </ul>
+</div>

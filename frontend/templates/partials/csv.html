@@ -1,0 +1,44 @@
+{% set prev_off = (offset - page_size) if offset >= page_size else 0 %}
+<div class="panel">
+  <div class="toolbar">
+    <strong>{{ file }}</strong>
+    <span class="muted">{{ plugin }} / {{ snapshot }}</span>
+    <a class="button secondary" href="/raw/{{ plugin | urlencode }}/{{ snapshot | urlencode }}/{{ file | urlencode }}">Download</a>
+    {% if offset > 0 %}
+    <button
+      class="secondary"
+      hx-get="/partials/csv?plugin={{ plugin | urlencode }}&snapshot={{ snapshot | urlencode }}&file={{ file | urlencode }}&offset={{ prev_off }}"
+      hx-target="#main"
+      hx-push-url="true"
+    >Previous</button>
+    {% endif %}
+    {% if has_more and next_offset is not none %}
+    <button
+      hx-get="/partials/csv?plugin={{ plugin | urlencode }}&snapshot={{ snapshot | urlencode }}&file={{ file | urlencode }}&offset={{ next_offset }}"
+      hx-target="#main"
+      hx-push-url="true"
+    >Next</button>
+    {% endif %}
+  </div>
+  <p class="muted">Showing rows {{ offset + 1 }}–{{ offset + rows|length }} (page size {{ page_size }})</p>
+  <div class="scroll-x">
+    <table>
+      <thead>
+        <tr>
+          {% for col in header %}
+          <th>{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          {% for cell in row %}
+          <td>{{ cell }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

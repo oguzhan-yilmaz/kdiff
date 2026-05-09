@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ title or "kdiff" }}</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4d;
+      --text: #e7ecf3;
+      --muted: #8b9bb4;
+      --accent: #6cb3ff;
+      --danger: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      flex: 1;
+      min-height: 0;
+    }
+    aside {
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+      overflow: auto;
+    }
+    main {
+      overflow: auto;
+      padding: 1rem 1.25rem;
+    }
+    .plugin-list {
+      list-style: none;
+      margin: 0;
+      padding: 0.5rem 0;
+    }
+    .plugin-list li a {
+      display: block;
+      padding: 0.45rem 1rem;
+      color: var(--text);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+    }
+    .plugin-list li a:hover {
+      background: rgba(108, 179, 255, 0.08);
+    }
+    .plugin-list li a.htmx-request {
+      opacity: 0.6;
+    }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      max-width: 100%;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.5rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: rgba(108, 179, 255, 0.12);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .scroll-x { overflow-x: auto; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    a.button, button {
+      display: inline-block;
+      background: var(--accent);
+      color: #0a0f14;
+      border: none;
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    a.button.secondary, button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .error-box {
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      background: rgba(255, 107, 107, 0.08);
+    }
+    h2 { margin-top: 0; font-size: 1.05rem; }
+    ul.snap-list, ul.file-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul.snap-list li, ul.file-list li {
+      border-bottom: 1px solid var(--border);
+    }
+    ul.snap-list a, ul.file-list a {
+      display: block;
+      padding: 0.5rem 0;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    ul.snap-list a:hover, ul.file-list a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>kdiff</h1>
+    <span class="muted">S3 snapshot browser</span>
+  </header>
+  <div class="layout">
+    <aside id="sidebar">
+      {% include "partials/sidebar_plugins.html" %}
+    </aside>
+    <main id="main">
+      <p class="muted">Choose a plugin to list snapshots.</p>
+    </main>
+  </div>
+</body>
+</html>
