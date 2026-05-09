@@ -20,7 +20,6 @@ export KDIFF_KUBECONFIG_FILE="$HOME/.kube/kdiff-tests"
 
 kind create cluster \
     --kubeconfig "$KDIFF_KUBECONFIG_FILE" \
-    --image "kindest/node:v1.34.0" \
     --name "$KDIFF_TEST_CLUSTER_NAME" 
 
 export KUBECONFIG="$KDIFF_KUBECONFIG_FILE"
@@ -38,12 +37,19 @@ kubectl get pod -A
 ```bash
 
 
+helm template \
+  -f kdiff.values.yaml \
+  kdiff-snapshots helm-chart/
+  
+
+
 # helm upgrade --install \
 helm install \
   --namespace default \
   --create-namespace \
-  -f ../kdiff-snapshots/kdiff.values.yaml \
-  kdiff-snapshots ../kdiff-snapshots/helm-chart/
+  -f kdiff.values.yaml \
+  kdiff-snapshots helm-chart/
+
 
 helm uninstall -n default kdiff-snapshots
 

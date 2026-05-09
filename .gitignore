@@ -8,6 +8,7 @@ diff/
 .DS_Store
 .vscode/
 archive/
+.sqlquery
 k8s-data-csv-*/
 kdiff-snapshots/todo.excalidraw
 kdiff-snapshots/helm-chart/*.sh
